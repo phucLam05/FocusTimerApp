@@ -26,8 +26,17 @@
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <!-- Phase -->
                 <TextBlock Text="{Binding CurrentPhase}" 
-                           FontSize="22" FontWeight="SemiBold" 
-                           Foreground="#FF70FF70" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    FontSize="22" 
+                    FontWeight="SemiBold"
+                    Foreground="#FF70FF70" 
+                    HorizontalAlignment="Center" 
+                    Margin="0,0,0,10"
+                    Cursor="Hand">       
+                    <TextBlock.InputBindings>
+                        <MouseBinding Gesture="LeftClick"
+                      Command="{Binding SwitchPhaseCommand}"/>
+                    </TextBlock.InputBindings>
+                </TextBlock>
 
                 <!-- Timer -->
                 <TextBlock Text="{Binding TimeLeftDisplay}" 

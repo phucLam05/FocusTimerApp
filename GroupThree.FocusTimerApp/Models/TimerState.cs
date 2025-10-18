@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GroupThree.FocusTimerApp.Models
+﻿namespace GroupThree.FocusTimerApp.Models
 {
     public class TimerState
     {
@@ -12,5 +6,12 @@ namespace GroupThree.FocusTimerApp.Models
         public bool IsRunning { get; set; }
         public string CurrentPhase { get; set; } = "Basic"; // Basic, Pomodoro, ShortBreak, LongBreak
         public int CompletedShortBreaks { get; set; } = 0;
+    }
+    public enum TimerPhase
+    {
+        Basic,
+        Pomodoro,
+        ShortBreak,
+        LongBreak
     }
 }
