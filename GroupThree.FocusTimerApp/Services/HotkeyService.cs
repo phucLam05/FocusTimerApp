@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using GroupThree.FocusTimerApp.Helper;
-using GroupThree.FocusTimerApp.Models; // Nếu cần thêm using khác, tùy chỉnh
+using GroupThree.FocusTimerApp.Models;
 
 namespace GroupThree.FocusTimerApp.Services
 {
@@ -23,73 +24,90 @@ namespace GroupThree.FocusTimerApp.Services
         private const int WM_HOTKEY = 0x0312;
 
         // ==============================
-        // Fields & Constructor
+        // Fields
         // ==============================
         private readonly Dictionary<int, string> _registeredHotkeys = new();
         private readonly Window _window;
-        private readonly SettingsService _settingsService; // Inject để load từ config
-        private HwndSource _source;
+        private readonly SettingsService _settingsService;
+        private HwndSource? _source;
         private int _currentId = 0;
 
-        // Sự kiện: MainViewModel sẽ lắng nghe để biết hotkey nào được nhấn
+        // Sự kiện để ViewModel hoặc MainWindow lắng nghe
         public event Action<string>? HotkeyPressed;
 
+        // ==============================
+        // Constructor
+        // ==============================
         public HotkeyService(Window window, SettingsService settingsService)
         {
             _window = window ?? throw new ArgumentNullException(nameof(window));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+
             IntPtr handle = new WindowInteropHelper(_window).EnsureHandle();
             _source = HwndSource.FromHwnd(handle);
             _source.AddHook(HwndHook);
         }
 
         // ==============================
-        // Đăng ký hotkey
+        // Đăng ký tất cả hotkey từ config
         // ==============================
         public void RegisterHotkeys()
         {
-            var hotkeys = _settingsService.LoadHotkeys(); // Giả sử method này trả List<HotkeyBinding> từ JSON/config
+            var hotkeys = _settingsService.LoadHotkeys();
+            if (hotkeys == null || hotkeys.Count == 0)
+            {
+                Console.WriteLine("⚠️ No hotkeys found to register.");
+                return;
+            }
+
             foreach (var binding in hotkeys)
             {
-                uint modifiers = 0;
-                if (binding.Modifiers.HasFlag(ModifierKeys.Control)) modifiers |= HotKeyHelpers.MOD_CONTROL;
-                if (binding.Modifiers.HasFlag(ModifierKeys.Alt)) modifiers |= HotKeyHelpers.MOD_ALT;
-                if (binding.Modifiers.HasFlag(ModifierKeys.Shift)) modifiers |= HotKeyHelpers.MOD_SHIFT;
-                if (binding.Modifiers.HasFlag(ModifierKeys.Windows)) modifiers |= HotKeyHelpers.MOD_WIN;
+                try
+                {
+                    uint modifiers = 0;
+                    if (binding.ParsedModifiers.HasFlag(ModifierKeys.Control)) modifiers |= HotKeyHelpers.MOD_CONTROL;
+                    if (binding.ParsedModifiers.HasFlag(ModifierKeys.Alt)) modifiers |= HotKeyHelpers.MOD_ALT;
+                    if (binding.ParsedModifiers.HasFlag(ModifierKeys.Shift)) modifiers |= HotKeyHelpers.MOD_SHIFT;
+                    if (binding.ParsedModifiers.HasFlag(ModifierKeys.Windows)) modifiers |= HotKeyHelpers.MOD_WIN;
 
-                RegisterHotkey(binding.ActionName, modifiers, binding.Key);
+                    RegisterHotkey(binding.ActionName, modifiers, binding.ParsedKey);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to register hotkey {binding.ActionName}: {ex.Message}");
+                }
             }
         }
 
-        // Đăng ký từng hotkey cụ thể
+        // ==============================
+        // Đăng ký 1 hotkey cụ thể
+        // ==============================
         private void RegisterHotkey(string actionName, uint modifiers, Key key)
         {
             try
             {
                 int id = ++_currentId;
                 IntPtr handle = new WindowInteropHelper(_window).EnsureHandle();
+
                 bool success = RegisterHotKey(handle, id, modifiers, (uint)KeyInterop.VirtualKeyFromKey(key));
                 if (success)
                 {
                     _registeredHotkeys[id] = actionName;
-                    // Thay Console bằng Logger nếu có: Logger.LogInfo($"Registered hotkey: {actionName} ({HotKeyHelpers.ToString(modifiers, key)})");
                     Console.WriteLine($"Registered hotkey: {actionName} ({HotKeyHelpers.ToString(modifiers, key)})");
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Failed to register hotkey for {actionName}. It may be in use by another application.");
+                    Console.WriteLine($"Could not register hotkey: {actionName} ({HotKeyHelpers.ToString(modifiers, key)}) - already in use?");
                 }
             }
             catch (Exception ex)
             {
-                // Thay Console bằng Logger nếu có
                 Console.WriteLine($"Error registering hotkey {actionName}: {ex.Message}");
-                // Có thể notify user qua event hoặc message box ở ViewModel
             }
         }
 
         // ==============================
-        // Nhận sự kiện nhấn phím toàn hệ thống
+        // Lắng nghe sự kiện WM_HOTKEY từ Windows
         // ==============================
         private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
@@ -98,7 +116,6 @@ namespace GroupThree.FocusTimerApp.Services
                 int id = wParam.ToInt32();
                 if (_registeredHotkeys.TryGetValue(id, out string? action))
                 {
-                    // Invoke trên UI thread nếu cần update UI
                     _window.Dispatcher.Invoke(() => HotkeyPressed?.Invoke(action));
                     handled = true;
                 }
@@ -114,21 +131,28 @@ namespace GroupThree.FocusTimerApp.Services
             IntPtr handle = new WindowInteropHelper(_window).Handle;
             if (handle == IntPtr.Zero) return;
 
-            foreach (var id in _registeredHotkeys.Keys.ToArray())
+            foreach (var id in _registeredHotkeys.Keys.ToList())
             {
                 UnregisterHotKey(handle, id);
             }
+
             _registeredHotkeys.Clear();
+            Console.WriteLine("All hotkeys unregistered.");
         }
 
+        // ==============================
+        // Dispose cleanup
+        // ==============================
         public void Dispose()
         {
             UnregisterAll();
+
             if (_source != null)
             {
                 _source.RemoveHook(HwndHook);
                 _source = null;
             }
+
             GC.SuppressFinalize(this);
         }
     }
