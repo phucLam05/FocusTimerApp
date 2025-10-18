@@ -56,7 +56,7 @@ namespace GroupThree.FocusTimerApp.Services
             var hotkeys = _settingsService.LoadHotkeys();
             if (hotkeys == null || hotkeys.Count == 0)
             {
-                Console.WriteLine("⚠️ No hotkeys found to register.");
+                Console.WriteLine("No hotkeys found to register.");
                 return;
             }
 

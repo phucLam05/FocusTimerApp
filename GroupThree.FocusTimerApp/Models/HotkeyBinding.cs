@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Windows.Input;
 
+// 👇 Thêm dòng này
+using KeyEnum = System.Windows.Input.Key;
+
 namespace GroupThree.FocusTimerApp.Models
 {
     public class HotkeyBinding
@@ -13,7 +16,15 @@ namespace GroupThree.FocusTimerApp.Models
         public string Description { get; set; } = string.Empty;
 
         [JsonIgnore]
-        public Key ParsedKey => (Key)Enum.Parse(typeof(Key), Key, true);
+        public KeyEnum ParsedKey
+        {
+            get
+            {
+                return Enum.TryParse(Key, true, out KeyEnum parsed)
+                    ? parsed
+                    : KeyEnum.None;
+            }
+        }
 
         [JsonIgnore]
         public ModifierKeys ParsedModifiers
@@ -21,7 +32,8 @@ namespace GroupThree.FocusTimerApp.Models
             get
             {
                 ModifierKeys modifiers = ModifierKeys.None;
-                foreach (var part in Modifiers.Split('+', StringSplitOptions.RemoveEmptyEntries))
+                foreach (var part in (Modifiers ?? "")
+                         .Split('+', StringSplitOptions.RemoveEmptyEntries))
                 {
                     switch (part.Trim().ToLower())
                     {
@@ -52,7 +64,7 @@ namespace GroupThree.FocusTimerApp.Models
             if (ParsedModifiers.HasFlag(ModifierKeys.Alt)) parts.Add("Alt");
             if (ParsedModifiers.HasFlag(ModifierKeys.Shift)) parts.Add("Shift");
             if (ParsedModifiers.HasFlag(ModifierKeys.Windows)) parts.Add("Win");
-            if (ParsedKey != Key.None) parts.Add(ParsedKey.ToString());
+            if (ParsedKey != KeyEnum.None) parts.Add(ParsedKey.ToString());
             return string.Join("+", parts);
         }
     }
