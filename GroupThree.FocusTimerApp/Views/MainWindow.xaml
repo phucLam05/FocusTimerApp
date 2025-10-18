@@ -1,12 +1,132 @@
 ﻿<Window x:Class="GroupThree.FocusTimerApp.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:GroupThree.FocusTimerApp"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        xmlns:vm="clr-namespace:GroupThree.FocusTimerApp.ViewModels"
+        Title="Focus Timer" Height="400" Width="350" Background="#FF1E1E2F"
+        WindowStartupLocation="CenterScreen">
 
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <TextBlock Text="Focus Timer" 
+                   FontSize="28" FontWeight="Bold" Foreground="#FFD3D3D3" 
+                   HorizontalAlignment="Center" Margin="0,10,0,20"/>
+
+        <!-- Timer Display -->
+        <Border Grid.Row="1" CornerRadius="15" Background="#FF2E2E4D" Padding="20" Margin="0,0,0,20">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <!-- Phase -->
+                <TextBlock Text="{Binding CurrentPhase}" 
+                           FontSize="22" FontWeight="SemiBold" 
+                           Foreground="#FF70FF70" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                <!-- Timer -->
+                <TextBlock Text="{Binding TimeLeftDisplay}" 
+                           FontSize="48" FontWeight="Bold" 
+                           Foreground="#FFFFFFFF" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                <!-- Progress bar -->
+                <ProgressBar Minimum="0" Maximum="{Binding TimeLeft}" 
+                             Value="{Binding TimeLeft}" Height="10" Width="200" Foreground="#FF70FF70" Background="#FF3E3E5A"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Controls -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
+            <!-- Start Button -->
+            <Button Content="Start" Command="{Binding StartCommand}" Width="100" Height="40" Margin="0,0,15,0">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Background" Value="#FF70FF70"/>
+                        <Setter Property="Foreground" Value="Black"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FF55DD55"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#FF3E3E5A"/>
+                                <Setter Property="Foreground" Value="#FFAAAAAA"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <!-- Stop Button -->
+            <Button Content="Stop" Command="{Binding StopCommand}" Width="100" Height="40" Margin="0,0,15,0">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Background" Value="#FFFF5555"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FFDD4444"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#FF3E3E5A"/>
+                                <Setter Property="Foreground" Value="#FFAAAAAA"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <!-- Reset Button -->
+            <Button Content="Reset" Command="{Binding ResetCommand}" Width="100" Height="40">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Background" Value="#FF5555FF"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FF4444DD"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </StackPanel>
     </Grid>
 </Window>
