@@ -155,5 +155,11 @@ namespace GroupThree.FocusTimerApp.Services
 
             GC.SuppressFinalize(this);
         }
+        public void ReloadHotkeys() //không cần tạo mới HotkeyService, mà chỉ gọi ReloadHotkeys() là toàn bộ hotkey được cập nhật ngay
+        {
+            UnregisterAll();   // Gỡ tất cả hotkey cũ
+            RegisterHotkeys(); // Đăng ký lại theo config mới
+        }
+
     }
 }
