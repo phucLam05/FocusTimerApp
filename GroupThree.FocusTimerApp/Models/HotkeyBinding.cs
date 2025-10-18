@@ -8,12 +8,12 @@ namespace GroupThree.FocusTimerApp.Models
     public class HotkeyBinding
     {
         public string ActionName { get; set; } = string.Empty;
-        public string Key { get; set; } = string.Empty;
+        public string KeyName { get; set; } = string.Empty;
         public string Modifiers { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
 
         [JsonIgnore]
-        public Key ParsedKey => (Key)Enum.Parse(typeof(Key), Key, true);
+        public Key ParsedKey => (Key)Enum.Parse(typeof(Key), KeyName, true);
 
         [JsonIgnore]
         public ModifierKeys ParsedModifiers
