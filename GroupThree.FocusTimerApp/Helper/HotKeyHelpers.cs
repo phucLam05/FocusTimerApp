@@ -57,18 +57,18 @@ namespace GroupThree.FocusTimerApp.Helper
         /// <summary>
         /// Chuyển ngược lại từ Key + modifier thành chuỗi "Ctrl+Alt+S".
         /// </summary>
-        public static string ToString(uint modifier, Key key)
-        {
-            List<string> parts = new();
+        //public static string ToString(uint modifier, Key key)
+        //{
+        //    List<string> parts = new();
 
-            if ((modifier & MOD_CONTROL) != 0) parts.Add("Ctrl");
-            if ((modifier & MOD_ALT) != 0) parts.Add("Alt");
-            if ((modifier & MOD_SHIFT) != 0) parts.Add("Shift");
-            if ((modifier & MOD_WIN) != 0) parts.Add("Win");
+        //    if ((modifier & MOD_CONTROL) != 0) parts.Add("Ctrl");
+        //    if ((modifier & MOD_ALT) != 0) parts.Add("Alt");
+        //    if ((modifier & MOD_SHIFT) != 0) parts.Add("Shift");
+        //    if ((modifier & MOD_WIN) != 0) parts.Add("Win");
 
-            parts.Add(key.ToString().ToUpperInvariant());
-            return string.Join("+", parts);
-        }
+        //    parts.Add(key.ToString().ToUpperInvariant());
+        //    return string.Join("+", parts);
+        //}
     }
 }
-}
+
