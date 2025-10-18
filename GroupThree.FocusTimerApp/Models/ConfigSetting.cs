@@ -6,7 +6,13 @@ using System.Threading.Tasks;
 
 namespace GroupThree.FocusTimerApp.Models
 {
-    internal class ConfigSetting
+    public class ConfigSetting
     {
+        public Dictionary<string, string> Hotkeys { get; set; } = new()
+        {
+            { "SwitchMode", "Alt+Q" },
+            { "StartStop", "Alt+P" },
+            { "OpenAlarm", "Alt+A" }
+        };
     }
 }
