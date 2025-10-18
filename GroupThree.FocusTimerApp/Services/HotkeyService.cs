@@ -69,16 +69,16 @@ namespace GroupThree.FocusTimerApp.Services
                 if (success)
                 {
                     _registeredHotkeys[id] = actionName;
-                    Console.WriteLine($"✅ Registered hotkey: {actionName} ({hotkeyString})");
+                    Console.WriteLine($"Registered hotkey: {actionName} ({hotkeyString})");
                 }
                 else
                 {
-                    Console.WriteLine($"⚠️ Failed to register hotkey: {hotkeyString} (maybe already in use)");
+                    Console.WriteLine($"Failed to register hotkey: {hotkeyString} (maybe already in use)");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error registering hotkey {actionName}: {ex.Message}");
+                Console.WriteLine($"Error registering hotkey {actionName}: {ex.Message}");
             }
         }
 
