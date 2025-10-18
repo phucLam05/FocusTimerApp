@@ -38,9 +38,13 @@ namespace GroupThree.FocusTimerApp.Services
         {
             _window = window ?? throw new ArgumentNullException(nameof(window));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
-            IntPtr handle = new WindowInteropHelper(_window).EnsureHandle();
-            _source = HwndSource.FromHwnd(handle);
-            _source.AddHook(HwndHook);
+
+            _window.SourceInitialized += (s, e) =>
+            {
+                IntPtr handle = new WindowInteropHelper(_window).Handle;
+                _source = HwndSource.FromHwnd(handle);
+                _source.AddHook(HwndHook);
+            };
         }
 
         // ==============================
@@ -131,5 +135,11 @@ namespace GroupThree.FocusTimerApp.Services
             }
             GC.SuppressFinalize(this);
         }
+        public void ReloadHotkeys() //không cần tạo mới HotkeyService, mà chỉ gọi ReloadHotkeys() là toàn bộ hotkey được cập nhật ngay
+        {
+            UnregisterAll();   // Gỡ tất cả hotkey cũ
+            RegisterHotkeys(); // Đăng ký lại theo config mới
+        }
+
     }
 }
