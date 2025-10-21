@@ -1,0 +1,15 @@
+<UserControl x:Class="GroupThree.FocusTimerApp.Views.GeneralSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Margin="10">
+        <TextBlock Text="General Settings" FontWeight="Bold" FontSize="14" />
+        <StackPanel Orientation="Horizontal" Margin="0,8">
+            <TextBlock Text="Start with Windows" VerticalAlignment="Center" Width="150" />
+            <CheckBox IsChecked="{Binding StartWithWindows}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,8">
+            <TextBlock Text="Run in background" VerticalAlignment="Center" Width="150" />
+            <CheckBox IsChecked="{Binding RunInBackground}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>
