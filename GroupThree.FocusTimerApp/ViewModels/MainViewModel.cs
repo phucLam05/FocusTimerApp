@@ -1,107 +1,136 @@
-﻿using GroupThree.FocusTimerApp.Models;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Windows.Threading;
+using GroupThree.FocusTimerApp.Commands;
+using GroupThree.FocusTimerApp.Services;
 
 namespace GroupThree.FocusTimerApp.ViewModels
 {
-    public class MainViewModel : INotifyPropertyChanged
+    public class MainViewModel : ViewModelBase
     {
+        private readonly ITimerService _timerService;
+        private readonly IWindowService _windowService;
+        private readonly IOverlayService _overlayService;
+
+        private string _timeText = "00:00:00";
+        public string TimeText
+        {
+            get => _timeText;
+            set => SetProperty(ref _timeText, value);
+        }
+
+        private double _progress;
+        public double Progress
+        {
+            get => _progress;
+            set => SetProperty(ref _progress, value);
+        }
+
+        private string _selectedMode = "Tracking";
+        public string SelectedMode
+        {
+            get => _selectedMode;
+            set => SetProperty(ref _selectedMode, value);
+        }
+
         public ICommand StartCommand { get; }
-        public ICommand ResetCommand { get; }
+        public ICommand PauseCommand { get; }
         public ICommand StopCommand { get; }
+        public ICommand OpenSettingsCommand { get; }
+        public ICommand ToggleOverlayCommand { get; }
 
-        private readonly DispatcherTimer _timer;
-        private readonly TimerSetting _settings;
-        private readonly TimerState _state;
+        public MainViewModel(ITimerService timerService, IWindowService windowService, IOverlayService overlayService)
+        {
+            _timerService = timerService ?? throw new ArgumentNullException(nameof(timerService));
+            _windowService = windowService ?? throw new ArgumentNullException(nameof(windowService));
+            _overlayService = overlayService ?? throw new ArgumentNullException(nameof(overlayService));
 
-        public string CurrentPhase
-        {
-            get => _state.CurrentPhase;
-            set { _state.CurrentPhase = value; OnPropertyChanged(); }
-        }
-        public bool IsRunning
-        {
-            get => _state.IsRunning;
-            set { _state.IsRunning = value; OnPropertyChanged(); }
-        }
-        public int TimeLeft
-        {
-            get => (int)_state.TimeLeft.TotalSeconds;
-            set { _state.TimeLeft = TimeSpan.FromSeconds(value); OnPropertyChanged(); }
+            StartCommand = new RelayCommand<object>(_ => Start());
+            PauseCommand = new RelayCommand<object>(_ => Pause());
+            StopCommand = new RelayCommand<object>(_ => Stop());
+            OpenSettingsCommand = new RelayCommand<object>(_ => _windowService.ShowSettingsWindow());
+            ToggleOverlayCommand = new RelayCommand<object>(_ => _overlayService.ToggleOverlay());
+
+            _timerService.Tick += OnTick;
+            _timerService.Finished += OnFinished;
         }
 
-        public string TimeLeftDisplay => _state.TimeLeft.ToString(@"hh\:mm\:ss");
-
-        private void Timer_Tick(object? sender, EventArgs e)
+        private void OnTick(object? s, TimerTickEventArgs e)
         {
-            if (_state.TimeLeft.TotalSeconds > 0)
+            if (e.Mode == TimerMode.Tracking)
             {
-                _state.TimeLeft = _state.TimeLeft.Subtract(TimeSpan.FromSeconds(1));
-                OnPropertyChanged(nameof(TimeLeftDisplay));
+                TimeText = e.Elapsed.ToString(@"hh\:mm\:ss");
+                Progress = 0;
             }
             else
             {
-                _timer.Stop();
-                _state.IsRunning = false;
-                OnPropertyChanged(nameof(IsRunning));
-                ((Commands.RelayCommand)StartCommand).RaiseCanExecuteChanged();
-                // Handle phase transitions here (e.g., switch to break)
+                TimeText = e.Remaining.ToString(@"hh\:mm\:ss");
+                Progress = e.Progress;
             }
         }
-        private void StartTimer()
+
+        private void OnFinished(object? s, EventArgs e)
         {
-            IsRunning = true;
-            _timer.Start();
-            ((Commands.RelayCommand)StartCommand).RaiseCanExecuteChanged();
-            ((Commands.RelayCommand)StopCommand).RaiseCanExecuteChanged();
+            // TODO: notify user
         }
 
-        private void StopTimer()
+        public void Start()
         {
-            IsRunning = false;
-            _timer.Stop();
-            ((Commands.RelayCommand)StartCommand).RaiseCanExecuteChanged();
-            ((Commands.RelayCommand)StopCommand).RaiseCanExecuteChanged();
-        }
-
-        private void ResetState()
-        {
-            CurrentPhase = "Basic";
-            TimeLeft = _settings.WorkDuration;
-            IsRunning = false;
-            ((Commands.RelayCommand)StartCommand).RaiseCanExecuteChanged();
-            ((Commands.RelayCommand)StopCommand).RaiseCanExecuteChanged();
-        }
-
-        public MainViewModel()
-        {
-            _settings = SettingManager.Load();
-            _state = new TimerState
+            if (string.Equals(SelectedMode, "Pomodoro", StringComparison.OrdinalIgnoreCase))
             {
-                TimeLeft = TimeSpan.FromMinutes(_settings.WorkDuration)
-            };
-            _timer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(1)
-            };
-            _timer.Tick += Timer_Tick;
+                _timerService.StartPomodoroWork();
+                return;
+            }
 
-            StartCommand = new Commands.RelayCommand(_ => StartTimer(), _ => !_state.IsRunning);
-            ResetCommand = new Commands.RelayCommand(_ => ResetState());
-            StopCommand = new Commands.RelayCommand(_ => StopTimer(), _ => _state.IsRunning);
-            ResetState();
+            _timerService.StartTracking();
         }
 
+        public void Pause() => _timerService.Pause();
+        public void Stop() => _timerService.Stop();
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string name = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        public void TogglePause()
+        {
+            if (_timerService.IsRunning)
+            {
+                _timerService.Pause();
+            }
+            else
+            {
+                _timerService.Resume();
+            }
+        }
+
+        public void HandleHotkeyAction(string action)
+        {
+            if (string.Equals(action, "ToggleOverlay", StringComparison.OrdinalIgnoreCase))
+            {
+                _overlay_service_toggle();
+                return;
+            }
+
+            if (string.Equals(action, "Start", StringComparison.OrdinalIgnoreCase))
+            {
+                Start();
+                return;
+            }
+
+            if (string.Equals(action, "Pause", StringComparison.OrdinalIgnoreCase))
+            {
+                Pause();
+                return;
+            }
+
+            if (string.Equals(action, "Stop", StringComparison.OrdinalIgnoreCase))
+            {
+                Stop();
+                return;
+            }
+
+            if (string.Equals(action, "TogglePause", StringComparison.OrdinalIgnoreCase))
+            {
+                TogglePause();
+            }
+        }
+
+        private void _overlay_service_toggle() => _overlayService.ToggleOverlay();
     }
 }

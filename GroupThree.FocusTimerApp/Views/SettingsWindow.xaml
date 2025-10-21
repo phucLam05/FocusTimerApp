@@ -1,0 +1,42 @@
+<Window x:Class="GroupThree.FocusTimerApp.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:GroupThree.FocusTimerApp.ViewModels"
+        xmlns:views="clr-namespace:GroupThree.FocusTimerApp.Views"
+        xmlns:conv="clr-namespace:GroupThree.FocusTimerApp.Converters"
+        Title="Settings" Height="400" Width="600">
+    <Window.Resources>
+        <conv:BooleanToStatusConverter x:Key="BooleanToStatusConverter" />
+        <!-- Map viewmodels to views using the actual UserControl views -->
+        <DataTemplate DataType="{x:Type vm:GeneralSettingsViewModel}">
+            <views:GeneralSettingsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:NotificationSettingsViewModel}">
+            <views:NotificationSettingsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TimerSettingsViewModel}">
+            <views:TimerSettingsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:HotkeySettingsViewModel}">
+            <views:HotkeySettingsView />
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Background="#EEE">
+            <Button Content="General" Margin="5" Command="{Binding ShowGeneralCommand}" />
+            <Button Content="Notification" Margin="5" Command="{Binding ShowNotificationCommand}" />
+            <Button Content="Timer" Margin="5" Command="{Binding ShowTimerCommand}" />
+            <Button Content="Hotkey" Margin="5" Command="{Binding ShowHotkeyCommand}" />
+        </StackPanel>
+
+        <Grid Grid.Column="1">
+            <ContentControl x:Name="ContentHost" Content="{Binding CurrentView}" Margin="8" />
+        </Grid>
+    </Grid>
+</Window>

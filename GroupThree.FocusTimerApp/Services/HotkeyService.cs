@@ -56,9 +56,12 @@ namespace GroupThree.FocusTimerApp.Services
             var hotkeys = _settingsService.LoadHotkeys();
             if (hotkeys == null || hotkeys.Count == 0)
             {
-                Console.WriteLine("⚠️ No hotkeys found to register.");
+                Console.WriteLine("No hotkeys found to register.");
                 return;
             }
+
+            // Clear previous registration flags in model
+            foreach (var h in hotkeys) h.IsRegistered = false;
 
             foreach (var binding in hotkeys)
             {
@@ -70,7 +73,8 @@ namespace GroupThree.FocusTimerApp.Services
                     if (binding.ParsedModifiers.HasFlag(ModifierKeys.Shift)) modifiers |= HotKeyHelpers.MOD_SHIFT;
                     if (binding.ParsedModifiers.HasFlag(ModifierKeys.Windows)) modifiers |= HotKeyHelpers.MOD_WIN;
 
-                    RegisterHotkey(binding.ActionName, modifiers, binding.ParsedKey);
+                    bool success = RegisterHotkey(binding, modifiers, binding.ParsedKey, out int id);
+                    binding.IsRegistered = success;
                 }
                 catch (Exception ex)
                 {
@@ -81,28 +85,35 @@ namespace GroupThree.FocusTimerApp.Services
 
         // ==============================
         // Đăng ký 1 hotkey cụ thể
+        // Returns whether registration succeeded and outputs id
         // ==============================
-        private void RegisterHotkey(string actionName, uint modifiers, Key key)
+        private bool RegisterHotkey(HotkeyBinding binding, uint modifiers, Key key, out int id)
         {
+            id = -1;
             try
             {
-                int id = ++_currentId;
+                id = ++_currentId;
                 IntPtr handle = new WindowInteropHelper(_window).EnsureHandle();
 
                 bool success = RegisterHotKey(handle, id, modifiers, (uint)KeyInterop.VirtualKeyFromKey(key));
                 if (success)
                 {
-                    _registeredHotkeys[id] = actionName;
-                    Console.WriteLine($"Registered hotkey: {actionName} ({HotKeyHelpers.ToString(modifiers, key)})");
+                    _registeredHotkeys[id] = binding.ActionName;
+                    Console.WriteLine($"Registered hotkey: {binding.ActionName} ({HotKeyHelpers.ToString(modifiers, key)})");
+                    return true;
                 }
                 else
                 {
-                    Console.WriteLine($"Could not register hotkey: {actionName} ({HotKeyHelpers.ToString(modifiers, key)}) - already in use?");
+                    Console.WriteLine($"Could not register hotkey: {binding.ActionName} ({HotKeyHelpers.ToString(modifiers, key)}) - already in use?");
+                    return false;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error registering hotkey {actionName}: {ex.Message}");
+                Console.WriteLine($"Error registering hotkey {binding.ActionName}: {ex.Message}");
+                // if exception, ensure id not used
+                if (id != -1 && _registeredHotkeys.ContainsKey(id)) _registeredHotkeys.Remove(id);
+                return false;
             }
         }
 
@@ -137,6 +148,14 @@ namespace GroupThree.FocusTimerApp.Services
             }
 
             _registeredHotkeys.Clear();
+
+            // Clear registration flags in model
+            var hotkeys = _settingsService.LoadHotkeys();
+            if (hotkeys != null)
+            {
+                foreach (var h in hotkeys) h.IsRegistered = false;
+            }
+
             Console.WriteLine("All hotkeys unregistered.");
         }
 

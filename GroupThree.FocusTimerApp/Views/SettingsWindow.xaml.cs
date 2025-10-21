@@ -2,9 +2,9 @@ using System.Windows;
 
 namespace GroupThree.FocusTimerApp.Views
 {
-    public partial class OverlayWindow : Window
+    public partial class SettingsWindow : Window
     {
-        public OverlayWindow()
+        public SettingsWindow()
         {
             InitializeComponent();
         }
