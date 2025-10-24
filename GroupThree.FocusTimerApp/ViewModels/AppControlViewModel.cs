@@ -110,7 +110,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
         private void AddApp()
         {
-            var dlg = new OpenFileDialog
+            var dlg = new Microsoft.Win32.OpenFileDialog
             {
                 Title = "Chọn file .exe của ứng dụng",
                 Filter = "Executable files (*.exe)|*.exe",
