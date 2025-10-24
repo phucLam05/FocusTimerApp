@@ -24,7 +24,12 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public RegisteredAppModel? SelectedApp
         {
             get => _selectedApp;
-            set => SetProperty(ref _selectedApp, value);
+            set
+            {
+                SetProperty(ref _selectedApp, value);
+                // 🔹 Khi thay đổi SelectedApp, cập nhật lại trạng thái nút Remove
+                (RemoveAppCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
         }
 
         public ICommand AddAppCommand { get; }
@@ -47,18 +52,31 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
             // 🟢 Lắng nghe sự kiện từ AppFocusService
             _focusService.EnteredWorkZone += app =>
+            {
+                if (_isShowingMessage) return;
+                _isShowingMessage = true;
+
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     System.Windows.MessageBox.Show($"Chào mừng quay lại {app.AppName}");
-                    // TODO: Resume timer ở đây nếu có
                 });
 
+                Task.Delay(2000).ContinueWith(_ => _isShowingMessage = false);
+            };
+
             _focusService.LeftWorkZone += app =>
+            {
+                if (_isShowingMessage) return;
+                _isShowingMessage = true;
+
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     System.Windows.MessageBox.Show($"Bạn đã rời khỏi vùng làm việc ({app.AppName})");
-                    // TODO: Pause timer ở đây nếu có
                 });
+
+                Task.Delay(2000).ContinueWith(_ => _isShowingMessage = false);
+            };
+
         }
 
         private void LoadRunningApps()
@@ -134,5 +152,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
             _focusService.UnregisterApp(SelectedApp.ExecutablePath);
             RegisteredApps.Remove(SelectedApp);
         }
+        private bool _isShowingMessage = false;
     }
 }

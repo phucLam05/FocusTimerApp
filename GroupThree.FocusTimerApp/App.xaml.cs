@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace GroupThree.FocusTimerApp
 {
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
         private IServiceProvider? _serviceProvider;
         public static IServiceProvider? ServiceProvider { get; private set; }
@@ -94,7 +94,7 @@ namespace GroupThree.FocusTimerApp
             services.AddTransient<SettingsWindow>(sp =>
             {
                 var settings = sp.GetRequiredService<SettingsService>();
-                var hotkey = (Application.Current as App)?.HotkeyServiceInstance;
+                var hotkey = (System.Windows.Application.Current as App)?.HotkeyServiceInstance;
                 var focusService = new AppFocusService();
                 var timerService = sp.GetRequiredService<TimerService>(); // 🔥 thêm dòng này
 

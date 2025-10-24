@@ -18,7 +18,7 @@ namespace GroupThree.FocusTimerApp.Views
     /// <summary>
     /// Interaction logic for AppControlView.xaml
     /// </summary>
-    public partial class AppControlView : UserControl
+    public partial class AppControlView : System.Windows.Controls.UserControl
     {
         public AppControlView()
         {
