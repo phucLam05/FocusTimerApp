@@ -12,8 +12,12 @@ namespace GroupThree.FocusTimerApp.ViewModels
     public class AppControlViewModel : ViewModelBase
     {
         private readonly AppFocusService _focusService;
-        public ICommand RegisterCommand { get; }
+        private readonly TimerService _timerService;
 
+        // 🟢 Danh sách app đang chạy
+        public ObservableCollection<RegisteredAppModel> RunningApps { get; } = new();
+
+        // 🟢 Danh sách app đã đăng ký
         public ObservableCollection<RegisteredAppModel> RegisteredApps { get; } = new();
 
         private RegisteredAppModel? _selectedApp;
@@ -26,39 +30,44 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public ICommand AddAppCommand { get; }
         public ICommand RemoveAppCommand { get; }
         public ICommand RefreshAppsCommand { get; }
+        public ICommand RegisterCommand { get; }
 
-        public AppControlViewModel(AppFocusService focusService)
+        public AppControlViewModel(AppFocusService focusService, TimerService timerService)
         {
             _focusService = focusService;
+            _timerService = timerService;
 
             AddAppCommand = new RelayCommand(AddApp);
             RemoveAppCommand = new RelayCommand(RemoveApp, () => SelectedApp != null);
             RefreshAppsCommand = new RelayCommand(LoadRunningApps);
+            RegisterCommand = new RelayCommand<RegisteredAppModel>(RegisterApp);
 
-            // Load danh sách app đang chạy ngay khi mở
             LoadRunningApps();
+            LoadRegisteredApps();
 
-            // Lắng nghe sự kiện từ AppFocusService
+            // 🟢 Lắng nghe sự kiện từ AppFocusService
             _focusService.EnteredWorkZone += app =>
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    System.Windows.MessageBox.Show($"Bạn đã quay lại {app.AppName}");
+                    System.Windows.MessageBox.Show($"Chào mừng quay lại {app.AppName}");
+                    // TODO: Resume timer ở đây nếu có
                 });
 
             _focusService.LeftWorkZone += app =>
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     System.Windows.MessageBox.Show($"Bạn đã rời khỏi vùng làm việc ({app.AppName})");
+                    // TODO: Pause timer ở đây nếu có
                 });
         }
 
         private void LoadRunningApps()
         {
-            RegisteredApps.Clear();
+            RunningApps.Clear();
 
-            // ✅ Lấy danh sách các process đang chạy
+            // ✅ Lấy các process có cửa sổ (có MainWindowTitle)
             var processes = Process.GetProcesses()
-                .Where(p => !string.IsNullOrEmpty(p.MainWindowTitle)) // bỏ background process
+                .Where(p => !string.IsNullOrEmpty(p.MainWindowTitle))
                 .DistinctBy(p => p.ProcessName);
 
             foreach (var proc in processes)
@@ -68,25 +77,34 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 {
                     exePath = proc.MainModule?.FileName ?? string.Empty;
                 }
-                catch { /* bỏ lỗi truy cập process system */ }
+                catch { /* bỏ lỗi truy cập */ }
 
                 if (!string.IsNullOrEmpty(exePath))
                 {
-                    var model = new RegisteredAppModel
+                    RunningApps.Add(new RegisteredAppModel
                     {
                         AppName = proc.ProcessName,
                         ExecutablePath = exePath,
                         IsRunning = true
-                    };
-                    RegisteredApps.Add(model);
+                    });
                 }
             }
+        }
 
-            // ✅ Gộp thêm app đã đăng ký trước đó
+        private void LoadRegisteredApps()
+        {
+            RegisteredApps.Clear();
             foreach (var app in _focusService.GetRegisteredApps())
+                RegisteredApps.Add(app);
+        }
+
+        private void RegisterApp(RegisteredAppModel? app)
+        {
+            if (app == null) return;
+            if (!RegisteredApps.Any(a => a.ExecutablePath == app.ExecutablePath))
             {
-                if (!RegisteredApps.Any(a => a.ExecutablePath == app.ExecutablePath))
-                    RegisteredApps.Add(app);
+                _focusService.RegisterApp(app);
+                RegisteredApps.Add(app);
             }
         }
 

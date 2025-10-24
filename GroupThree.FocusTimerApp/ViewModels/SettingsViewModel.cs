@@ -11,6 +11,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         private readonly SettingsService _settingsService;
         private readonly HotkeyService? _hotkeyService;
         private readonly AppFocusService _focusService;
+        private readonly TimerService _timerService;
 
         private object _currentView = null!;
         public object CurrentView
@@ -39,11 +40,12 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public ICommand ReloadHotkeysCommand { get; }
         public ICommand ShowFocusZoneCommand { get; } // ✅ thêm dòng này
 
-        public SettingsViewModel(SettingsService settingsService, HotkeyService? hotkeyService, AppFocusService focusService)
+        public SettingsViewModel(SettingsService settingsService, HotkeyService? hotkeyService, AppFocusService focusService, TimerService timerService)
         {
             _settingsService = settingsService;
             _hotkeyService = hotkeyService;
             _focusService = focusService;
+            _timerService = timerService;
 
             ShowGeneralCommand = new RelayCommand<object>(_ => ShowGeneral());
             ShowNotificationCommand = new RelayCommand<object>(_ => ShowNotification());
@@ -54,6 +56,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
             // default view
             ShowGeneral();
+            _timerService = timerService;
         }
 
         private void ShowGeneral() =>
@@ -72,6 +75,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
             _hotkeyService?.ReloadHotkeys();
 
         private void ShowFocusZone() =>
-            CurrentView = new AppControlViewModel(_focusService); // ✅ dùng ViewModel, không phải UserControl
+            CurrentView = new AppControlViewModel(_focusService, _timerService); // ✅ dùng ViewModel, không phải UserControl
     }
 }

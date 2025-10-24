@@ -10,48 +10,36 @@ namespace GroupThree.FocusTimerApp.Services
 {
     public class AppFocusService
     {
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll")]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
-
-        private readonly System.Timers.Timer _checkTimer;
-        private readonly List<RegisteredAppModel> _registeredApps = new();
-        private RegisteredAppModel? _currentActiveApp;
-
         public event Action<RegisteredAppModel>? EnteredWorkZone;
         public event Action<RegisteredAppModel>? LeftWorkZone;
 
+        private readonly List<RegisteredAppModel> _registeredApps = new();
+        private RegisteredAppModel? _currentFocusedApp;
+        private readonly System.Timers.Timer _focusCheckTimer;
+
         public AppFocusService()
         {
-            _checkTimer = new System.Timers.Timer(1000); // check mỗi giây
-            _checkTimer.Elapsed += (_, __) => CheckForeground();
+            _focusCheckTimer = new System.Timers.Timer(1000); // check mỗi 1s
+            _focusCheckTimer.Elapsed += CheckForeground;
+            _focusCheckTimer.Start();
         }
 
-        public void Start() => _checkTimer.Start();
-        public void Stop() => _checkTimer.Stop();
+        public IEnumerable<RegisteredAppModel> GetRegisteredApps() => _registeredApps;
 
-        // ===============================
-        // 🧠 1. QUẢN LÝ APP ĐƯỢC ĐĂNG KÝ
-        // ===============================
         public void RegisterApp(RegisteredAppModel app)
         {
-            if (!_registeredApps.Any(a => a.ExecutablePath.Equals(app.ExecutablePath, StringComparison.OrdinalIgnoreCase)))
+            if (!_registeredApps.Any(a => a.ExecutablePath == app.ExecutablePath))
                 _registeredApps.Add(app);
         }
 
         public void UnregisterApp(string exePath)
         {
-            _registeredApps.RemoveAll(a => a.ExecutablePath.Equals(exePath, StringComparison.OrdinalIgnoreCase));
+            var app = _registeredApps.FirstOrDefault(a => a.ExecutablePath == exePath);
+            if (app != null)
+                _registeredApps.Remove(app);
         }
 
-        public IReadOnlyList<RegisteredAppModel> GetRegisteredApps() => _registeredApps.AsReadOnly();
-
-        // ===============================
-        // 🧭 2. THEO DÕI APP ĐANG FOCUS
-        // ===============================
-        private void CheckForeground()
+        private void CheckForeground(object? sender, ElapsedEventArgs e)
         {
             try
             {
@@ -65,17 +53,24 @@ namespace GroupThree.FocusTimerApp.Services
                 var registered = _registeredApps.FirstOrDefault(a =>
                     exePath.Equals(a.ExecutablePath, StringComparison.OrdinalIgnoreCase));
 
-                if (registered != null && _currentActiveApp == null)
+                // 🟢 Nếu focus vào app khác hẳn so với trước đó
+                if (registered != _currentFocusedApp)
                 {
-                    _currentActiveApp = registered;
-                    _currentActiveApp.LastActive = DateTime.Now;
-                    EnteredWorkZone?.Invoke(registered);
-                }
-                else if (registered == null && _currentActiveApp != null)
-                {
-                    var left = _currentActiveApp;
-                    _currentActiveApp = null;
-                    LeftWorkZone?.Invoke(left);
+                    // Nếu rời khỏi app cũ
+                    if (_currentFocusedApp != null)
+                        LeftWorkZone?.Invoke(_currentFocusedApp);
+
+                    // Nếu app mới thuộc vùng focus
+                    if (registered != null)
+                    {
+                        _currentFocusedApp = registered;
+                        _currentFocusedApp.LastActive = DateTime.Now;
+                        EnteredWorkZone?.Invoke(registered);
+                    }
+                    else
+                    {
+                        _currentFocusedApp = null;
+                    }
                 }
             }
             catch
@@ -84,37 +79,10 @@ namespace GroupThree.FocusTimerApp.Services
             }
         }
 
-        // ============================================
-        // 🔍 3. QUÉT DANH SÁCH ỨNG DỤNG ĐANG CHẠY
-        // ============================================
-        public IReadOnlyList<RegisteredAppModel> GetRunningApps()
-        {
-            var apps = new List<RegisteredAppModel>();
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
 
-            foreach (var process in Process.GetProcesses())
-            {
-                try
-                {
-                    // chỉ lấy process có cửa sổ thực
-                    if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowHandle != IntPtr.Zero)
-                    {
-                        apps.Add(new RegisteredAppModel
-                        {
-                            AppName = process.ProcessName,
-                            ExecutablePath = process.MainModule?.FileName ?? "Unknown",
-                            LastActive = DateTime.Now,
-                            IsRunning = true
-                        });
-                    }
-                }
-                catch
-                {
-                    // bỏ qua process không truy cập được
-                }
-            }
-
-            // sắp xếp theo tên cho dễ nhìn
-            return apps.OrderBy(a => a.AppName).ToList();
-        }
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
     }
 }
