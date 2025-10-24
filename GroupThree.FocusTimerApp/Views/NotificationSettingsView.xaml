@@ -1,0 +1,15 @@
+<UserControl x:Class="GroupThree.FocusTimerApp.Views.NotificationSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Margin="10">
+        <TextBlock Text="Notification Settings" FontWeight="Bold" FontSize="14" />
+        <StackPanel Orientation="Horizontal" Margin="0,8">
+            <TextBlock Text="Enable notifications" VerticalAlignment="Center" Width="150" />
+            <CheckBox IsChecked="{Binding EnableNotifications}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,8">
+            <TextBlock Text="Enable sound" VerticalAlignment="Center" Width="150" />
+            <CheckBox IsChecked="{Binding EnableSound}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

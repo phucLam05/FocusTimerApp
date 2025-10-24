@@ -1,0 +1,28 @@
+<UserControl x:Class="GroupThree.FocusTimerApp.Views.TimerSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Margin="10">
+        <TextBlock Text="Timer Settings" FontWeight="Bold" FontSize="14" />
+        <StackPanel Orientation="Horizontal" Margin="0,8">
+            <TextBlock Text="Work (min)" VerticalAlignment="Center" Width="150" />
+            <TextBox Width="60" Text="{Binding WorkDuration}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,8">
+            <TextBlock Text="Short Break (min)" VerticalAlignment="Center" Width="150" />
+            <TextBox Width="60" Text="{Binding ShortBreak}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,8">
+            <TextBlock Text="Long Break (min)" VerticalAlignment="Center" Width="150" />
+            <TextBox Width="60" Text="{Binding LongBreak}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,8">
+            <TextBlock Text="Long break every" VerticalAlignment="Center" Width="150" />
+            <TextBox Width="60" Text="{Binding LongBreakEvery}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,8">
+            <TextBlock Text="Tracking interval (min)" VerticalAlignment="Center" Width="150" />
+            <TextBox Width="60" Text="{Binding TrackingInterval}" />
+        </StackPanel>
+        <Button Content="Save" Command="{Binding SaveCommand}" Width="80" Margin="0,10,0,0" />
+    </StackPanel>
+</UserControl>
