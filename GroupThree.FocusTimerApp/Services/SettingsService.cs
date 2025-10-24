@@ -11,9 +11,15 @@ namespace GroupThree.FocusTimerApp.Services
         private readonly string _configPath;
         private ConfigSetting? _cachedSettings;
 
+        public event Action<ConfigSetting>? SettingsChanged;
+
         public SettingsService(string? configPath = null)
         {
-            _configPath = configPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+            // Prefer existing json/AppSettings.json if present, otherwise appsettings.json in base dir
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var jsonDirPath = Path.Combine(baseDir, "json", "AppSettings.json");
+            _configPath = configPath
+                ?? (File.Exists(jsonDirPath) ? jsonDirPath : Path.Combine(baseDir, "appsettings.json"));
         }
 
         public ConfigSetting LoadSettings()
@@ -46,12 +52,20 @@ namespace GroupThree.FocusTimerApp.Services
         {
             try
             {
+                // ensure directory exists
+                var dir = Path.GetDirectoryName(_configPath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
                 string json = JsonSerializer.Serialize(settings, new JsonSerializerOptions
                 {
                     WriteIndented = true
                 });
                 File.WriteAllText(_configPath, json);
                 _cachedSettings = settings;
+                SettingsChanged?.Invoke(settings);
             }
             catch (Exception ex)
             {

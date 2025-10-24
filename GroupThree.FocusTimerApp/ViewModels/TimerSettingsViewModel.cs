@@ -24,7 +24,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
         public ICommand SaveCommand { get; }
 
-        public TimerSettingsViewModel(SettingsService settingsService)
+        public TimerSettingsViewModel(Services.SettingsService settingsService)
         {
             _settings_service_or_default(settingsService);
 
@@ -32,8 +32,9 @@ namespace GroupThree.FocusTimerApp.ViewModels
             var cfg = _settingsService.LoadSettings();
             WorkDuration = cfg.TimerSettings.WorkDuration;
             ShortBreak = cfg.TimerSettings.BreakDuration;
+            LongBreak = cfg.TimerSettings.LongBreakDuration;
+            LongBreakEvery = cfg.TimerSettings.LongBreakEvery;
             TrackingInterval = cfg.TimerSettings.TrackingInterval;
-            // LongBreak and LongBreakEvery may be new fields in config; keep defaults if not present
 
             SaveCommand = new RelayCommand<object>(_ => Save());
         }
@@ -43,11 +44,13 @@ namespace GroupThree.FocusTimerApp.ViewModels
             var cfg = _settingsService.LoadSettings();
             cfg.TimerSettings.WorkDuration = WorkDuration;
             cfg.TimerSettings.BreakDuration = ShortBreak;
+            cfg.TimerSettings.LongBreakDuration = LongBreak;
+            cfg.TimerSettings.LongBreakEvery = LongBreakEvery;
             cfg.TimerSettings.TrackingInterval = TrackingInterval;
             _settingsService.SaveSettings(cfg);
         }
 
-        private void _settings_service_or_default(SettingsService settingsService)
+        private void _settings_service_or_default(Services.SettingsService settingsService)
         {
             // helper to avoid analyzers complaining; no-op
             _ = settingsService;

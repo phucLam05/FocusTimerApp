@@ -31,6 +31,15 @@ namespace GroupThree.FocusTimerApp.ViewModels
             cfg.General.StartWithWindows = StartWithWindows;
             cfg.General.RunInBackground = RunInBackground;
             _settingsService.SaveSettings(cfg);
+
+            // Apply StartWithWindows immediately; do not change window visibility here
+            try
+            {
+                var sp = GroupThree.FocusTimerApp.App.ServiceProvider;
+                var startupSvc = sp?.GetService(typeof(Services.StartupService)) as Services.StartupService;
+                startupSvc?.ApplyStartupSetting(StartWithWindows);
+            }
+            catch { }
         }
     }
 }
