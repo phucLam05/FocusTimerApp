@@ -7,7 +7,7 @@ using GroupThree.FocusTimerApp.ViewModels;
 
 namespace GroupThree.FocusTimerApp
 {
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
         private IServiceProvider? _serviceProvider;
         public static IServiceProvider? ServiceProvider { get; private set; }
@@ -90,7 +90,7 @@ namespace GroupThree.FocusTimerApp
             services.AddTransient<SettingsWindow>(sp =>
             {
                 var settings = sp.GetRequiredService<SettingsService>();
-                var hotkey = (Application.Current as App)?.HotkeyServiceInstance;
+                var hotkey = (System.Windows.Application.Current as App)?.HotkeyServiceInstance;
                 var vm = new SettingsViewModel(settings, hotkey);
                 var win = new SettingsWindow();
                 win.DataContext = vm;

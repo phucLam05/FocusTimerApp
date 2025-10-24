@@ -9,7 +9,8 @@ namespace GroupThree.FocusTimerApp.ViewModels
     {
         private readonly ITimerService _timerService;
         private readonly IWindowService _windowService;
-        private readonly IOverlayService _overlayService;
+        private readonly IOverlayService _overlay_service;
+        private readonly System.Windows.Forms.NotifyIcon _notifyIcon;
 
         private string _timeText = "00:00:00";
         public string TimeText
@@ -25,11 +26,18 @@ namespace GroupThree.FocusTimerApp.ViewModels
             set => SetProperty(ref _progress, value);
         }
 
-        private string _selectedMode = "Tracking";
+        private string _selectedMode = "Basic";
         public string SelectedMode
         {
             get => _selectedMode;
-            set => SetProperty(ref _selectedMode, value);
+            set
+            {
+                if (SetProperty(ref _selectedMode, value))
+                {
+                    // reset timer state when UI mode changes
+                    ResetState();
+                }
+            }
         }
 
         public ICommand StartCommand { get; }
@@ -41,51 +49,80 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public MainViewModel(ITimerService timerService, IWindowService windowService, IOverlayService overlayService)
         {
             _timerService = timerService ?? throw new ArgumentNullException(nameof(timerService));
+            _window_service_or_default(windowService);
             _windowService = windowService ?? throw new ArgumentNullException(nameof(windowService));
-            _overlayService = overlayService ?? throw new ArgumentNullException(nameof(overlayService));
+            _overlay_service_or_default(overlayService);
+            _overlay_service = overlayService ?? throw new ArgumentNullException(nameof(overlayService));
+
+            // setup tray icon for notifications (use fully-qualified types to avoid ambiguous using)
+            _notifyIcon = new System.Windows.Forms.NotifyIcon()
+            {
+                Icon = System.Drawing.SystemIcons.Information,
+                Visible = true,
+                Text = "Focus Timer"
+            };
 
             StartCommand = new RelayCommand<object>(_ => Start());
             PauseCommand = new RelayCommand<object>(_ => Pause());
             StopCommand = new RelayCommand<object>(_ => Stop());
             OpenSettingsCommand = new RelayCommand<object>(_ => _windowService.ShowSettingsWindow());
-            ToggleOverlayCommand = new RelayCommand<object>(_ => _overlayService.ToggleOverlay());
+            ToggleOverlayCommand = new RelayCommand<object>(_ => _overlay_service.ToggleOverlay());
 
             _timerService.Tick += OnTick;
             _timerService.Finished += OnFinished;
+            _timerService.NotificationRequested += OnNotificationRequested;
+
+            // initialize display according to current mode
+            ResetState();
         }
 
         private void OnTick(object? s, TimerTickEventArgs e)
         {
-            if (e.Mode == TimerMode.Tracking)
-            {
-                TimeText = e.Elapsed.ToString(@"hh\:mm\:ss");
-                Progress = 0;
-            }
-            else
-            {
-                TimeText = e.Remaining.ToString(@"hh\:mm\:ss");
-                Progress = e.Progress;
-            }
+            // Show elapsed (count-up) for both Basic and Pomodoro
+            TimeText = e.Elapsed.ToString(@"hh\:mm\:ss");
+            Progress = e.Progress;
         }
 
         private void OnFinished(object? s, EventArgs e)
         {
-            // TODO: notify user
+            // keep simple: show a balloon
+            try
+            {
+                _notifyIcon.BalloonTipTitle = "Focus Timer";
+                _notifyIcon.BalloonTipText = "Phase finished.";
+                _notifyIcon.ShowBalloonTip(2000);
+            }
+            catch { }
+        }
+
+        private void OnNotificationRequested(object? s, string message)
+        {
+            try
+            {
+                _notifyIcon.BalloonTipTitle = "Focus Timer";
+                _notifyIcon.BalloonTipText = message;
+                _notifyIcon.ShowBalloonTip(3000);
+            }
+            catch { }
         }
 
         public void Start()
         {
             if (string.Equals(SelectedMode, "Pomodoro", StringComparison.OrdinalIgnoreCase))
             {
-                _timerService.StartPomodoroWork();
+                _timerService.StartPomodoro();
                 return;
             }
 
-            _timerService.StartTracking();
+            _timerService.StartBasic();
         }
 
         public void Pause() => _timerService.Pause();
-        public void Stop() => _timerService.Stop();
+        public void Stop()
+        {
+            _timerService.Stop();
+            try { _notifyIcon.Visible = false; } catch { }
+        }
 
         public void TogglePause()
         {
@@ -131,6 +168,36 @@ namespace GroupThree.FocusTimerApp.ViewModels
             }
         }
 
-        private void _overlay_service_toggle() => _overlayService.ToggleOverlay();
+        private void _overlay_service_toggle() => _overlay_service.ToggleOverlay();
+
+        private void _window_service_or_default(IWindowService windowService)
+        {
+            // helper to avoid analyzers complaining; no-op
+            _ = windowService;
+        }
+
+        private void _overlay_service_or_default(IOverlayService overlayService)
+        {
+            // helper to avoid analyzers complaining; no-op
+            _ = overlayService;
+        }
+
+        // Reset timer display/state when UI mode changes
+        public void ResetState()
+        {
+            // stop any running timer
+            try
+            {
+                _timerService.ResetState();
+            }
+            catch
+            {
+                // ignore
+            }
+
+            // show elapsed starting at zero for both modes (count-up)
+            TimeText = TimeSpan.Zero.ToString(@"hh\:mm\:ss");
+            Progress = 0;
+        }
     }
 }

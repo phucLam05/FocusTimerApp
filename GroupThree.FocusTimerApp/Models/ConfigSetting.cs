@@ -47,13 +47,13 @@ namespace GroupThree.FocusTimerApp.Models
 
     public class TimerSettings
     {
-        // Mode can be "Pomodoro" or "Tracking"
+        // Mode can be "Pomodoro" or "Basic"
         public string Mode { get; set; } = "Pomodoro";
         // Work duration in minutes (for Pomodoro work)
         public int WorkDuration { get; set; } = 50;
         // Break duration in minutes (short break)
         public int BreakDuration { get; set; } = 10;
-        // Interval in minutes for tracking notifications
+        // Interval in minutes for tracking/basic notifications
         public int TrackingInterval { get; set; } = 15;
         // Whether to enable notifications for timer events
         public bool EnableNotifications { get; set; } = true;

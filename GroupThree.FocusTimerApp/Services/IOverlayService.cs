@@ -1,10 +1,12 @@
+using System;
+
 namespace GroupThree.FocusTimerApp.Services
 {
     public interface IOverlayService
     {
-        void ToggleOverlay();
+        bool IsOverlayVisible { get; }
         void ShowOverlay();
         void HideOverlay();
-        bool IsOverlayVisible { get; }
+        void ToggleOverlay();
     }
 }

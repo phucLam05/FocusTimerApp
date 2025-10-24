@@ -14,7 +14,7 @@
 
         <ComboBox Grid.Row="0" HorizontalAlignment="Left" Width="150"
                   Margin="0,0,0,10" SelectedValuePath="Tag" SelectedValue="{Binding SelectedMode, Mode=TwoWay}">
-            <ComboBoxItem Content="Tracking" Tag="Tracking" />
+            <ComboBoxItem Content="Basic" Tag="Basic" />
             <ComboBoxItem Content="Pomodoro" Tag="Pomodoro" />
         </ComboBox>
 
