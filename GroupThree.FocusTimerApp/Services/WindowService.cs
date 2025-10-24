@@ -21,18 +21,21 @@
                 var app = Application.Current as App;
                 HotkeyService? hotkey = app?.HotkeyServiceInstance;
 
-                // Try to resolve SettingsWindow via DI
-                var window = (SettingsWindow?)_serviceProvider.GetService(typeof(SettingsWindow));
-                if (window == null)
-                {
-                    // create settings VM and window manually
-                    var settingsService = (SettingsService?)_serviceProvider.GetService(typeof(SettingsService)) ?? new SettingsService();
-                    var vm = new SettingsViewModel(settingsService, hotkey);
-                    window = new SettingsWindow();
-                    window.DataContext = vm;
-                }
+                var settingsService =
+                    (SettingsService?)_serviceProvider.GetService(typeof(SettingsService))
+                    ?? new SettingsService();
 
-                window.Owner = Application.Current?.MainWindow;
+                var focusService =
+                    (AppFocusService?)_serviceProvider.GetService(typeof(AppFocusService))
+                    ?? new AppFocusService();
+
+                var vm = new SettingsViewModel(settingsService, hotkey, focusService);
+                var window = new SettingsWindow
+                {
+                    DataContext = vm,
+                    Owner = Application.Current?.MainWindow
+                };
+
                 window.ShowDialog();
             }
             catch (Exception ex)

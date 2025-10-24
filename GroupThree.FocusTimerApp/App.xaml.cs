@@ -91,9 +91,11 @@ namespace GroupThree.FocusTimerApp
             {
                 var settings = sp.GetRequiredService<SettingsService>();
                 var hotkey = (Application.Current as App)?.HotkeyServiceInstance;
-                var vm = new SettingsViewModel(settings, hotkey);
+                var focusService = new AppFocusService();
+
+                var settingsVM = new SettingsViewModel(settings, hotkey, focusService);
                 var win = new SettingsWindow();
-                win.DataContext = vm;
+                win.DataContext = settingsVM;
                 return win;
             });
 

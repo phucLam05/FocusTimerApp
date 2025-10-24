@@ -20,6 +20,9 @@
         <DataTemplate DataType="{x:Type vm:HotkeySettingsViewModel}">
             <views:HotkeySettingsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AppControlViewModel}">
+            <views:AppControlView />
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
@@ -33,6 +36,7 @@
             <Button Content="Notification" Margin="5" Command="{Binding ShowNotificationCommand}" />
             <Button Content="Timer" Margin="5" Command="{Binding ShowTimerCommand}" />
             <Button Content="Hotkey" Margin="5" Command="{Binding ShowHotkeyCommand}" />
+            <Button Content="Focus Zone Apps" Margin="5" Command="{Binding ShowFocusZoneCommand}" />
         </StackPanel>
 
         <Grid Grid.Column="1">

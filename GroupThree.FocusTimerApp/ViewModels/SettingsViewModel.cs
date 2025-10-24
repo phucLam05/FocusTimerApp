@@ -1,7 +1,8 @@
-using System.Windows.Input;
-using GroupThree.FocusTimerApp.Commands;
+﻿using GroupThree.FocusTimerApp.Commands;
 using GroupThree.FocusTimerApp.Models;
 using GroupThree.FocusTimerApp.Services;
+using GroupThree.FocusTimerApp.Views;
+using System.Windows.Input;
 
 namespace GroupThree.FocusTimerApp.ViewModels
 {
@@ -9,6 +10,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
     {
         private readonly SettingsService _settingsService;
         private readonly HotkeyService? _hotkeyService;
+        private readonly AppFocusService _focusService;
 
         private object _currentView = null!;
         public object CurrentView
@@ -35,50 +37,41 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public ICommand ShowTimerCommand { get; }
         public ICommand ShowHotkeyCommand { get; }
         public ICommand ReloadHotkeysCommand { get; }
+        public ICommand ShowFocusZoneCommand { get; } // ✅ thêm dòng này
 
-        // Only DI constructor
-        public SettingsViewModel(SettingsService settingsService, HotkeyService? hotkeyService)
+        public SettingsViewModel(SettingsService settingsService, HotkeyService? hotkeyService, AppFocusService focusService)
         {
             _settingsService = settingsService;
             _hotkeyService = hotkeyService;
+            _focusService = focusService;
 
             ShowGeneralCommand = new RelayCommand<object>(_ => ShowGeneral());
             ShowNotificationCommand = new RelayCommand<object>(_ => ShowNotification());
             ShowTimerCommand = new RelayCommand<object>(_ => ShowTimer());
             ShowHotkeyCommand = new RelayCommand<object>(_ => ShowHotkey());
             ReloadHotkeysCommand = new RelayCommand<object>(_ => ReloadHotkeys());
+            ShowFocusZoneCommand = new RelayCommand<object>(_ => ShowFocusZone()); // ✅ sửa kiểu cho đồng bộ
 
             // default view
             ShowGeneral();
         }
 
-        private void ShowGeneral()
-        {
-            var vm = new GeneralSettingsViewModel(_settingsService);
-            CurrentView = vm; // set VM; App.xaml DataTemplate maps VM -> View
-        }
+        private void ShowGeneral() =>
+            CurrentView = new GeneralSettingsViewModel(_settingsService);
 
-        private void ShowNotification()
-        {
-            var vm = new NotificationSettingsViewModel(_settingsService);
-            CurrentView = vm;
-        }
+        private void ShowNotification() =>
+            CurrentView = new NotificationSettingsViewModel(_settingsService);
 
-        private void ShowTimer()
-        {
-            var vm = new TimerSettingsViewModel(_settingsService);
-            CurrentView = vm;
-        }
+        private void ShowTimer() =>
+            CurrentView = new TimerSettingsViewModel(_settingsService);
 
-        private void ShowHotkey()
-        {
-            var vm = new HotkeySettingsViewModel(_settingsService, _hotkeyService);
-            CurrentView = vm;
-        }
+        private void ShowHotkey() =>
+            CurrentView = new HotkeySettingsViewModel(_settingsService, _hotkeyService);
 
-        private void ReloadHotkeys()
-        {
+        private void ReloadHotkeys() =>
             _hotkeyService?.ReloadHotkeys();
-        }
+
+        private void ShowFocusZone() =>
+            CurrentView = new AppControlViewModel(_focusService); // ✅ dùng ViewModel, không phải UserControl
     }
 }
