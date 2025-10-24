@@ -3,31 +3,688 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:GroupThree.FocusTimerApp.Converters"
         mc:Ignorable="d"
-        Title="Focus Timer" Height="350" Width="400">
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+        Title="Focus Timer" 
+        Height="680" Width="480"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="CanMinimize">
 
-        <ComboBox Grid.Row="0" HorizontalAlignment="Left" Width="150"
-                  Margin="0,0,0,10" SelectedValuePath="Tag" SelectedValue="{Binding SelectedMode, Mode=TwoWay}">
-            <ComboBoxItem Content="Tracking" Tag="Tracking" />
-            <ComboBoxItem Content="Pomodoro" Tag="Pomodoro" />
-        </ComboBox>
+    <!-- ==================== RESOURCES ==================== -->
+    <Window.Resources>
+        
+        <!-- Converters -->
+        <conv:ThemeToIconConverter x:Key="ThemeToIconConverter" />
+        <conv:ThemeToTextConverter x:Key="ThemeToTextConverter" />
+        <conv:BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis" />
+        <conv:ModeToPomodoroConverter x:Key="ModeToPomodoroConverter" />
+        <conv:ModeToTrackingConverter x:Key="ModeToTrackingConverter" />
 
-        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="{Binding TimeText}" FontSize="36" HorizontalAlignment="Center" />
-            <ProgressBar Width="300" Height="12" Value="{Binding Progress}" Minimum="0" Maximum="1" />
-        </StackPanel>
+        <!-- Sidebar Mode Button Style -->
+        <Style x:Key="SidebarModeButton" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Padding" Value="20,15" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                            VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryButtonBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SecondaryButtonBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-            <Button Content="Start" Width="80" Command="{Binding StartCommand}" Margin="4,0" />
-            <Button Content="Pause" Width="80" Command="{Binding PauseCommand}" Margin="4,0" />
-            <Button Content="Stop" Width="80" Command="{Binding StopCommand}" Margin="4,0" />
-            <Button Content="Settings" Width="80" Command="{Binding OpenSettingsCommand}" Margin="4,0" />
-        </StackPanel>
+        <!-- Window Control Button Style -->
+        <Style x:Key="WindowControlButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SecondaryButtonBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Close Button Style -->
+        <Style x:Key="CloseButton" TargetType="Button" BasedOn="{StaticResource WindowControlButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#e74c3c" />
+                    <Setter Property="Foreground" Value="White" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Hamburger Button Style -->
+        <Style x:Key="HamburgerButton" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="45" />
+            <Setter Property="Height" Value="45" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SecondaryButtonBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Sidebar Show/Hide Animations -->
+        <Storyboard x:Key="ShowSidebarAnimation">
+            <DoubleAnimation Storyboard.TargetName="SidebarTransform"
+                           Storyboard.TargetProperty="X"
+                           From="-200" To="0"
+                           Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="SidebarBorder"
+                           Storyboard.TargetProperty="Opacity"
+                           From="0" To="1"
+                           Duration="0:0:0.3" />
+            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="SidebarOverlay"
+                                          Storyboard.TargetProperty="Visibility">
+                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}" />
+            </ObjectAnimationUsingKeyFrames>
+            <DoubleAnimation Storyboard.TargetName="SidebarOverlay"
+                           Storyboard.TargetProperty="Opacity"
+                           From="0" To="1"
+                           Duration="0:0:0.3" />
+        </Storyboard>
+
+        <Storyboard x:Key="HideSidebarAnimation">
+            <DoubleAnimation Storyboard.TargetName="SidebarTransform"
+                           Storyboard.TargetProperty="X"
+                           From="0" To="-200"
+                           Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="SidebarBorder"
+                           Storyboard.TargetProperty="Opacity"
+                           From="1" To="0"
+                           Duration="0:0:0.3" />
+            <DoubleAnimation Storyboard.TargetName="SidebarOverlay"
+                           Storyboard.TargetProperty="Opacity"
+                           From="1" To="0"
+                           Duration="0:0:0.3" />
+            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="SidebarOverlay"
+                                          Storyboard.TargetProperty="Visibility">
+                <DiscreteObjectKeyFrame KeyTime="0:0:0.3" Value="{x:Static Visibility.Collapsed}" />
+            </ObjectAnimationUsingKeyFrames>
+        </Storyboard>
+    </Window.Resources>
+
+    <!-- ==================== MAIN LAYOUT ==================== -->
+    <Grid>
+        
+        <!-- ==================== SIDEBAR OVERLAY ==================== -->
+        <!-- Overlay to close sidebar when clicking outside -->
+        <Border x:Name="SidebarOverlay"
+                Background="#80000000"
+                Panel.ZIndex="99"
+                Opacity="0"
+                Visibility="Collapsed"
+                MouseLeftButtonDown="SidebarOverlay_Click" />
+        
+        <!-- ==================== SIDEBAR ==================== -->
+        <Border x:Name="SidebarBorder"
+                Background="{DynamicResource SidebarBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,1,0"
+                Width="200"
+                HorizontalAlignment="Left"
+                Panel.ZIndex="100"
+                Opacity="0">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="SidebarTransform" X="-200" />
+            </Border.RenderTransform>
+            
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />  <!-- Header -->
+                    <RowDefinition Height="*" />     <!-- Mode Selection -->
+                    <RowDefinition Height="Auto" />  <!-- Footer -->
+                </Grid.RowDefinitions>
+
+                <!-- Sidebar Header with Close Button -->
+                <Border Grid.Row="0" 
+                        Background="Transparent"
+                        Padding="15,15"
+                        BorderBrush="Transparent"
+                        BorderThickness="0">
+                    <!-- Close Sidebar Button (X) -->
+                    <Button HorizontalAlignment="Left"
+                            Width="40" Height="40"
+                            Style="{StaticResource WindowControlButton}"
+                            Click="CloseSidebarButton_Click"
+                            ToolTip="Close Menu">
+                        <Path Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" 
+                              Fill="{DynamicResource TextPrimaryBrush}"
+                              Width="14" Height="14"
+                              Stretch="Uniform" />
+                    </Button>
+                </Border>
+
+                <!-- Mode Selection -->
+                <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                    
+                    <!-- Timer Modes Section Header -->
+                    <Grid Margin="15,5,15,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <Rectangle Grid.Column="0" 
+                                   Height="1" 
+                                   Fill="{DynamicResource BorderBrush}"
+                                   VerticalAlignment="Center" />
+                        
+                        <TextBlock Grid.Column="1" 
+                                   Text="Timer Modes"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   Margin="8,0"
+                                   VerticalAlignment="Center" />
+                        
+                        <Rectangle Grid.Column="2" 
+                                   Height="1" 
+                                   Fill="{DynamicResource BorderBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Pomodoro Mode -->
+                    <RadioButton IsChecked="{Binding SelectedMode, Converter={StaticResource ModeToPomodoroConverter}, Mode=TwoWay}"
+                                 GroupName="TimerMode"
+                                 Style="{StaticResource SidebarModeButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"
+                                  Fill="{DynamicResource TextPrimaryBrush}"
+                                  Width="16" Height="16"
+                                  Stretch="Uniform"
+                                  Margin="0,0,8,0"
+                                  VerticalAlignment="Center" />
+                            <TextBlock Text="Pomodoro" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+
+                    <!-- Tracking Mode -->
+                    <RadioButton IsChecked="{Binding SelectedMode, Converter={StaticResource ModeToTrackingConverter}, Mode=TwoWay}"
+                                 GroupName="TimerMode"
+                                 Style="{StaticResource SidebarModeButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M15,1H9V2H15V1M19.04,4.55L20.45,3.13L19.04,1.72L17.62,3.13L19.04,4.55M11,14H13V8H11V14M19,12H22V10H19V12M4.96,5.55L6.37,4.13L4.96,2.72L3.55,4.13L4.96,5.55M1,12H4V10H1V12M11,20H13V22H11V20M17.62,20.87L19.04,19.45L20.45,20.87L19.04,22.28L17.62,20.87M6.37,19.87L4.96,21.28L3.55,19.87L4.96,18.45L6.37,19.87M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6Z"
+                                  Fill="{DynamicResource TextPrimaryBrush}"
+                                  Width="16" Height="16"
+                                  Stretch="Uniform"
+                                  Margin="0,0,8,0"
+                                  VerticalAlignment="Center" />
+                            <TextBlock Text="Tracking" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+
+                <!-- Sidebar Footer -->
+                <StackPanel Grid.Row="2" Margin="0,0,0,10">
+                    
+                    <!-- Settings Button -->
+                    <Border Background="Transparent"
+                            Padding="20,15"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Button Command="{Binding OpenSettingsCommand}" 
+                                Background="Transparent"
+                                BorderThickness="0"
+                                HorizontalContentAlignment="Left"
+                                Cursor="Hand"
+                                Padding="0">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"
+                                      Fill="{DynamicResource TextSecondaryBrush}"
+                                      Width="18" Height="18" 
+                                      Stretch="Uniform"
+                                      Margin="0,0,10,0" />
+                                <TextBlock Text="Settings"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           FontSize="13"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Border>
+                    
+                    <!-- Theme Toggle -->
+                    <Border Background="Transparent"
+                            Padding="20,15"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Button Command="{Binding ToggleThemeCommand}" 
+                                Background="Transparent"
+                                BorderThickness="0"
+                                HorizontalContentAlignment="Left"
+                                Cursor="Hand"
+                                Padding="0">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{Binding ThemeService.IsDarkMode, Converter={StaticResource ThemeToIconConverter}}"
+                                      Fill="{DynamicResource TextSecondaryBrush}"
+                                      Width="18" Height="18" 
+                                      Stretch="Uniform"
+                                      Margin="0,0,10,0" />
+                                <TextBlock Text="{Binding ThemeService.IsDarkMode, Converter={StaticResource ThemeToTextConverter}}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           FontSize="13"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Border>
+
+                    <!-- Hint Text -->
+                    <TextBlock Text="Select timer mode above"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="11"
+                               FontStyle="Italic"
+                               TextAlignment="Center"
+                               Margin="0,10,0,0"
+                               Opacity="0.6" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ==================== MAIN CONTENT AREA ==================== -->
+        <Grid Margin="0,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />  <!-- Header -->
+                <RowDefinition Height="*" />     <!-- Main Content -->
+                <RowDefinition Height="Auto" />  <!-- Footer Stats -->
+            </Grid.RowDefinitions>
+
+            <!-- ==================== HEADER ==================== -->
+            <Border Grid.Row="0" 
+                    Background="{DynamicResource HeaderBackgroundBrush}" 
+                    Padding="15,15"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />  <!-- Left: Menu + Title -->
+                        <ColumnDefinition Width="*" />     <!-- Center: Empty -->
+                        <ColumnDefinition Width="Auto" />  <!-- Right: Window Controls -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Hamburger + Title -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        
+                        <!-- Hamburger Menu Button -->
+                        <ToggleButton x:Name="SidebarToggle"
+                                      Style="{StaticResource HamburgerButton}"
+                                      IsChecked="False"
+                                      Checked="SidebarToggle_Checked"
+                                      Unchecked="SidebarToggle_Unchecked"
+                                      Margin="0,0,15,0">
+                            <Grid Width="24" Height="24">
+                                <!-- Hamburger Icon (3 lines) -->
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <Rectangle Fill="{DynamicResource TextPrimaryBrush}" 
+                                             Height="3" Width="24" 
+                                             RadiusX="1.5" RadiusY="1.5" 
+                                             Margin="0,0,0,3" />
+                                    <Rectangle Fill="{DynamicResource TextPrimaryBrush}" 
+                                             Height="3" Width="24" 
+                                             RadiusX="1.5" RadiusY="1.5" 
+                                             Margin="0,0,0,3" />
+                                    <Rectangle Fill="{DynamicResource TextPrimaryBrush}" 
+                                             Height="3" Width="24" 
+                                             RadiusX="1.5" RadiusY="1.5" />
+                                </StackPanel>
+                            </Grid>
+                        </ToggleButton>
+
+                        <!-- Gradient Circle Icon -->
+                        <Ellipse Width="8" Height="8" 
+                                 Margin="0,0,8,0"
+                                 VerticalAlignment="Center">
+                            <Ellipse.Fill>
+                                <RadialGradientBrush>
+                                    <GradientStop Color="#8B5CF6" Offset="0" />
+                                    <GradientStop Color="#6366F1" Offset="1" />
+                                </RadialGradientBrush>
+                            </Ellipse.Fill>
+                            <Ellipse.Effect>
+                                <DropShadowEffect Color="#8B5CF6" 
+                                                BlurRadius="8" 
+                                                ShadowDepth="0" 
+                                                Opacity="0.6" />
+                            </Ellipse.Effect>
+                        </Ellipse>
+
+                        <!-- Title -->
+                        <TextBlock Text="Focus Timer" 
+                                   FontSize="18" 
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center">
+                            <TextBlock.Effect>
+                                <DropShadowEffect Color="{DynamicResource PrimaryButtonColor}" 
+                                                  BlurRadius="8" 
+                                                  ShadowDepth="0" 
+                                                  Opacity="0.4" />
+                            </TextBlock.Effect>
+                        </TextBlock>
+                    </StackPanel>
+
+                    <!-- Right: Window Controls -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        
+                        <!-- Minimize Button -->
+                        <Button Style="{StaticResource WindowControlButton}"
+                                Click="MinimizeButton_Click"
+                                ToolTip="Minimize">
+                            <Path Data="M20,14H4V10H20" 
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Width="14" Height="14"
+                                  Stretch="Uniform" />
+                        </Button>
+
+                        <!-- Close Button -->
+                        <Button Style="{StaticResource CloseButton}"
+                                Click="CloseButton_Click"
+                                ToolTip="Close"
+                                Margin="4,0,0,0">
+                            <Path Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" 
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Width="14" Height="14"
+                                  Stretch="Uniform" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ==================== MAIN CONTENT ==================== -->
+            <Grid Grid.Row="1" Margin="20,25,20,15">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />  <!-- Mode Badge -->
+                    <RowDefinition Height="*" />     <!-- Timer Display -->
+                    <RowDefinition Height="Auto" />  <!-- Control Buttons -->
+                </Grid.RowDefinitions>
+
+                <!-- Mode Badge -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource PrimaryButtonBrush}"
+                        BorderThickness="1"
+                        CornerRadius="16"
+                        Padding="14,8"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,18">
+                    <TextBlock Text="{Binding SelectedMode}" 
+                               FontSize="12" 
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryButtonBrush}"
+                               HorizontalAlignment="Center" />
+                </Border>
+
+                <!-- Timer Display Card -->
+                <Border Grid.Row="1"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="2"
+                        CornerRadius="20"
+                        Padding="25,20"
+                        Margin="58,0,58,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />  <!-- Circular Progress -->
+                            <RowDefinition Height="Auto" />  <!-- Progress Bar -->
+                        </Grid.RowDefinitions>
+
+                        <!-- Circular Progress Ring -->
+                        <Viewbox Grid.Row="0" Width="200" Height="200">
+                            <Grid Width="280" Height="280">
+                                
+                                <!-- Background Circle -->
+                                <Ellipse Stroke="{DynamicResource ProgressBackgroundBrush}" 
+                                         StrokeThickness="14" 
+                                         Width="280" 
+                                         Height="280" 
+                                         Margin="0,31,0,-31" />
+
+                                <!-- Progress Circle -->
+                                <Path x:Name="ProgressPath"
+                                      Stroke="{DynamicResource PrimaryButtonBrush}"
+                                      StrokeThickness="14"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      Margin="0,31,0,-31">
+                                    <Path.Data>
+                                        <PathGeometry>
+                                            <PathGeometry.Figures>
+                                                <PathFigureCollection>
+                                                    <PathFigure StartPoint="140,7">
+                                                        <PathFigure.Segments>
+                                                            <PathSegmentCollection>
+                                                                <ArcSegment x:Name="ProgressArc"
+                                                                          Size="133,133"
+                                                                          SweepDirection="Clockwise"
+                                                                          IsLargeArc="False"
+                                                                          Point="140,7" />
+                                                            </PathSegmentCollection>
+                                                        </PathFigure.Segments>
+                                                    </PathFigure>
+                                                </PathFigureCollection>
+                                            </PathGeometry.Figures>
+                                        </PathGeometry>
+                                    </Path.Data>
+                                </Path>
+
+                                <!-- Time Text in Center -->
+                                <TextBlock Text="{Binding TimeText}" 
+                                           FontSize="52" 
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"
+                                           Margin="0,31,0,-31">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect Color="{DynamicResource PrimaryButtonColor}" 
+                                                          BlurRadius="12" 
+                                                          ShadowDepth="0" 
+                                                          Opacity="0.2" />
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                            </Grid>
+                        </Viewbox>
+
+                        <!-- Progress Bar Below Circle -->
+                        <ProgressBar Grid.Row="1" 
+                                     Value="{Binding Progress}" 
+                                     Maximum="1"
+                                     Style="{StaticResource ModernProgressBar}"
+                                     Height="NaN"
+                                     Margin="54,75,54,-88" />
+                    </Grid>
+                </Border>
+
+                <!-- Control Buttons -->
+                <StackPanel Grid.Row="2" 
+                            Orientation="Horizontal" 
+                            HorizontalAlignment="Center"
+                            Margin="0,20,0,0">
+
+                    <!-- Start Button -->
+                    <Button Content="Start" 
+                            Width="78"
+                            Height="38"
+                            Command="{Binding StartCommand}"
+                            Style="{StaticResource PrimaryButton}"
+                            Visibility="{Binding IsRunning, Converter={StaticResource InverseBoolToVis}}"
+                            Margin="3" />
+
+                    <!-- Pause Button -->
+                    <Button Content="Pause" 
+                            Width="78"
+                            Height="38"
+                            Command="{Binding PauseCommand}"
+                            Style="{StaticResource ModernButton}"
+                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}"
+                            Margin="3" />
+
+                    <!-- Reset Button -->
+                    <Button Content="Reset" 
+                            Width="78"
+                            Height="38"
+                            Command="{Binding StopCommand}"
+                            Style="{StaticResource ModernButton}"
+                            Margin="3" />
+                </StackPanel>
+            </Grid>
+
+            <!-- ==================== FOOTER STATS ==================== -->
+            <Border Grid.Row="2"
+                    Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,1,0,0"
+                    Padding="15,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />  <!-- Streak -->
+                        <ColumnDefinition Width="*" />  <!-- Total Time -->
+                        <ColumnDefinition Width="*" />  <!-- Sessions -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Streak -->
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                        <Path Data="M17.66,11.2C17.43,10.9 17.15,10.64 16.89,10.38C16.22,9.78 15.46,9.35 14.82,8.72C13.33,7.26 13,4.85 13.95,3C13,3.23 12.17,3.75 11.46,4.32C8.87,6.4 7.85,10.07 9.07,13.22C9.11,13.32 9.15,13.42 9.15,13.55C9.15,13.77 9,13.97 8.8,14.05C8.57,14.15 8.33,14.09 8.14,13.93C8.08,13.88 8.04,13.83 8,13.76C6.87,12.33 6.69,10.28 7.45,8.64C5.78,10 4.87,12.3 5,14.47C5.06,14.97 5.12,15.47 5.29,15.97C5.43,16.57 5.7,17.17 6,17.7C7.08,19.43 8.95,20.67 10.96,20.92C13.1,21.19 15.39,20.8 17.03,19.32C18.86,17.66 19.5,15 18.56,12.72L18.43,12.46C18.22,12 17.66,11.2 17.66,11.2M14.5,17.5C14.22,17.74 13.76,18 13.4,18.1C12.28,18.5 11.16,17.94 10.5,17.28C11.69,17 12.4,16.12 12.61,15.23C12.78,14.43 12.46,13.77 12.33,13C12.21,12.26 12.23,11.63 12.5,10.94C12.69,11.32 12.89,11.7 13.13,12C13.9,13 15.11,13.44 15.37,14.8C15.41,14.94 15.43,15.08 15.43,15.23C15.46,16.05 15.1,16.95 14.5,17.5H14.5Z"
+                              Fill="{DynamicResource PrimaryButtonBrush}"
+                              Width="18" Height="18"
+                              Stretch="Uniform"
+                              HorizontalAlignment="Center"
+                              Margin="0,0,0,5" />
+                        <TextBlock Text="0 Days"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,2" />
+                        <TextBlock Text="Streak"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   Opacity="0.7" />
+                    </StackPanel>
+
+                    <!-- Total Time -->
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <Path Data="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"
+                              Fill="{DynamicResource PrimaryButtonBrush}"
+                              Width="18" Height="18"
+                              Stretch="Uniform"
+                              HorizontalAlignment="Center"
+                              Margin="0,0,0,5" />
+                        <TextBlock Text="0h 0m"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,2" />
+                        <TextBlock Text="Total Time"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   Opacity="0.7" />
+                    </StackPanel>
+
+                    <!-- Sessions -->
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                        <Path Data="M9,10A3.5,3.5 0 0,1 12.5,6.5A3.5,3.5 0 0,1 16,10C16,11.75 14.75,13.25 13,13.75V15H16V19H15V17H13V19H12V17H10V19H9V15H12V13.75C10.25,13.25 9,11.75 9,10M9.5,2A0.5,0.5 0 0,1 10,2.5V5.5A0.5,0.5 0 0,1 9.5,6A0.5,0.5 0 0,1 9,5.5V2.5A0.5,0.5 0 0,1 9.5,2M5.03,4.25L6.97,6.19C7.17,6.39 7.19,6.69 7.03,6.91C6.87,7.13 6.59,7.16 6.38,7L4.44,5.06C4.24,4.86 4.22,4.56 4.38,4.34C4.54,4.13 4.82,4.09 5.03,4.25M2.5,9A0.5,0.5 0 0,1 3,9.5A0.5,0.5 0 0,1 2.5,10A0.5,0.5 0 0,1 2,9.5A0.5,0.5 0 0,1 2.5,9M22.5,9A0.5,0.5 0 0,1 23,9.5A0.5,0.5 0 0,1 22.5,10A0.5,0.5 0 0,1 22,9.5A0.5,0.5 0 0,1 22.5,9M19.97,4.25C20.18,4.09 20.46,4.13 20.62,4.34C20.78,4.56 20.76,4.86 20.56,5.06L18.62,7C18.41,7.16 18.13,7.13 17.97,6.91C17.81,6.69 17.83,6.39 18.03,6.19L19.97,4.25M15.5,2A0.5,0.5 0 0,1 16,2.5V5.5A0.5,0.5 0 0,1 15.5,6A0.5,0.5 0 0,1 15,5.5V2.5A0.5,0.5 0 0,1 15.5,2Z"
+                              Fill="{DynamicResource PrimaryButtonBrush}"
+                              Width="18" Height="18"
+                              Stretch="Uniform"
+                              HorizontalAlignment="Center"
+                              Margin="0,0,0,5" />
+                        <TextBlock Text="0"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,2" />
+                        <TextBlock Text="Sessions"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   Opacity="0.7" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
