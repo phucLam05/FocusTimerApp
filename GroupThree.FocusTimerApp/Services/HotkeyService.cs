@@ -98,8 +98,13 @@ namespace GroupThree.FocusTimerApp.Services
                 bool success = RegisterHotKey(handle, id, modifiers, (uint)KeyInterop.VirtualKeyFromKey(key));
                 if (success)
                 {
-                    _registeredHotkeys[id] = binding.ActionName;
-                    Console.WriteLine($"Registered hotkey: {binding.ActionName} ({HotKeyHelpers.ToString(modifiers, key)})");
+                    // Normalize Pause as TogglePause to let it resume too
+                    var action = string.Equals(binding.ActionName, "Pause", StringComparison.OrdinalIgnoreCase)
+                        ? "TogglePause"
+                        : binding.ActionName;
+
+                    _registeredHotkeys[id] = action;
+                    Console.WriteLine($"Registered hotkey: {action} ({HotKeyHelpers.ToString(modifiers, key)})");
                     return true;
                 }
                 else

@@ -22,22 +22,22 @@ namespace GroupThree.FocusTimerApp.Models
             new HotkeyBinding
             {
                 ActionName = "Start",
-                Key = "",
-                Modifiers = "",
+                Key = "S",
+                Modifiers = "Ctrl+Alt",
                 Description = "Start timer"
             },
             new HotkeyBinding
             {
                 ActionName = "Pause",
-                Key = "",
-                Modifiers = "",
+                Key = "K",
+                Modifiers = "Ctrl+Alt",
                 Description = "Pause timer"
             },
             new HotkeyBinding
             {
                 ActionName = "Stop",
-                Key = "",
-                Modifiers = "",
+                Key = "X",
+                Modifiers = "Ctrl+Alt",
                 Description = "Stop timer"
             }
         };
@@ -53,6 +53,10 @@ namespace GroupThree.FocusTimerApp.Models
         public int WorkDuration { get; set; } = 50;
         // Break duration in minutes (short break)
         public int BreakDuration { get; set; } = 10;
+        // Long break duration in minutes
+        public int LongBreakDuration { get; set; } = 30;
+        // Take a long break after this many short breaks
+        public int LongBreakEvery { get; set; } = 4;
         // Interval in minutes for tracking/basic notifications
         public int TrackingInterval { get; set; } = 15;
         // Whether to enable notifications for timer events
