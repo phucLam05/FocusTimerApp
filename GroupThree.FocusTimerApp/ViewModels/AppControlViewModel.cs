@@ -6,6 +6,8 @@ using Microsoft.Win32;
 using GroupThree.FocusTimerApp.Models;
 using GroupThree.FocusTimerApp.Services;
 using GroupThree.FocusTimerApp.Commands;
+using System.Windows.Forms; // ⚠️ thêm using này (Forms)
+using System.Threading.Tasks;
 
 namespace GroupThree.FocusTimerApp.ViewModels
 {
@@ -58,7 +60,26 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    System.Windows.MessageBox.Show($"Chào mừng quay lại {app.AppName}");
+                    // ✅ Hiển thị thông báo góc phải màn hình
+                    var notify = new NotifyIcon
+                    {
+                        Icon = System.Drawing.SystemIcons.Information,
+                        Visible = true,
+                        BalloonTipTitle = "Focus Timer",
+                        BalloonTipText = $"Chào mừng quay lại {app.AppName}"
+                    };
+                    notify.ShowBalloonTip(3000);
+
+                    // ✅ Resume timer
+                    if (!_timerService.IsRunning)
+                        _timerService.Resume();
+
+                    // 🔻 Ẩn notify sau khi hiển thị xong
+                    Task.Delay(3500).ContinueWith(_ =>
+                    {
+                        notify.Visible = false;
+                        notify.Dispose();
+                    });
                 });
 
                 Task.Delay(2000).ContinueWith(_ => _isShowingMessage = false);
@@ -71,7 +92,24 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    System.Windows.MessageBox.Show($"Bạn đã rời khỏi vùng làm việc ({app.AppName})");
+                    var notify = new NotifyIcon
+                    {
+                        Icon = System.Drawing.SystemIcons.Information,
+                        Visible = true,
+                        BalloonTipTitle = "Focus Timer",
+                        BalloonTipText = $"Bạn đã rời khỏi vùng làm việc ({app.AppName})"
+                    };
+                    notify.ShowBalloonTip(3000);
+
+                    // ✅ Pause timer
+                    if (_timerService.IsRunning)
+                        _timerService.Pause();
+
+                    Task.Delay(3500).ContinueWith(_ =>
+                    {
+                        notify.Visible = false;
+                        notify.Dispose();
+                    });
                 });
 
                 Task.Delay(2000).ContinueWith(_ => _isShowingMessage = false);
