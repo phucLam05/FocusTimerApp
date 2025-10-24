@@ -18,29 +18,29 @@ namespace GroupThree.FocusTimerApp.Models
             new HotkeyBinding
             {
                 ActionName = "ToggleOverlay",
-                Key = "P",
+                Key = "Q",
                 Modifiers = "Ctrl+Alt",
                 Description = "Show/Hide overlay"
             },
             new HotkeyBinding
             {
                 ActionName = "Start",
-                Key = "",
-                Modifiers = "",
+                Key = "W",
+                Modifiers = "Ctrl+Alt",
                 Description = "Start timer"
             },
             new HotkeyBinding
             {
                 ActionName = "Pause",
-                Key = "",
-                Modifiers = "",
+                Key = "E",
+                Modifiers = "Ctrl+Alt",
                 Description = "Pause timer"
             },
             new HotkeyBinding
             {
                 ActionName = "Stop",
-                Key = "",
-                Modifiers = "",
+                Key = "R",
+                Modifiers = "Ctrl+Alt",
                 Description = "Stop timer"
             }
         };

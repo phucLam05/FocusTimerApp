@@ -23,16 +23,25 @@ namespace GroupThree.FocusTimerApp.Converters
         {
             if (value is string strValue)
             {
+                // If empty string, keep previous value
+                if (string.IsNullOrWhiteSpace(strValue))
+                {
+                    return Binding.DoNothing;
+                }
+                
                 // Try to parse the string to int
                 if (int.TryParse(strValue, out int result))
                 {
-                    // Validate that it's positive
-                    return result > 0 ? result : 1;
+                    // Allow any integer value, validation will happen on Save
+                    return result;
                 }
-                // If empty or invalid, return 1 as default
-                return 1;
+                else
+                {
+                    // If not a valid number, keep the previous value
+                    return Binding.DoNothing;
+                }
             }
-            return 1;
+            return Binding.DoNothing;
         }
     }
 }

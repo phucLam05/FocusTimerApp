@@ -91,7 +91,8 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
-                Padding="18">
+                Padding="18"
+                Margin="0,0,0,15">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -131,5 +132,21 @@
                 </Button>
             </Grid>
         </Border>
+
+        <!-- Action Buttons -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Reset Defaults" 
+                    Command="{Binding ResetDefaultsCommand}" 
+                    Style="{StaticResource ModernButton}"
+                    Width="130"
+                    Height="38"
+                    Margin="0,0,8,0" />
+            
+            <Button Content="Save Changes" 
+                    Command="{Binding SaveCommand}" 
+                    Style="{StaticResource PrimaryButton}"
+                    Width="140"
+                    Height="38" />
+        </StackPanel>
     </StackPanel>
 </UserControl>

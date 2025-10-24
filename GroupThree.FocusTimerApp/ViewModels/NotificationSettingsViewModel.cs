@@ -1,5 +1,7 @@
 using System;
 using System.Windows;
+using System.Windows.Input;
+using GroupThree.FocusTimerApp.Commands;
 using GroupThree.FocusTimerApp.Views;
 
 namespace GroupThree.FocusTimerApp.ViewModels
@@ -88,8 +90,9 @@ namespace GroupThree.FocusTimerApp.ViewModels
             }
         }
 
-        public System.Windows.Input.ICommand SaveCommand { get; }
-        public System.Windows.Input.ICommand TestNotificationCommand { get; }
+        public ICommand SaveCommand { get; }
+        public ICommand TestNotificationCommand { get; }
+        public ICommand ResetDefaultsCommand { get; }
 
         /// <summary>
         /// Constructor without NotificationService (for simple DI)
@@ -111,8 +114,9 @@ namespace GroupThree.FocusTimerApp.ViewModels
             _notificationService = notificationService;
             
             // Initialize commands first
-            SaveCommand = new Commands.RelayCommand<object>(_ => Save());
-            TestNotificationCommand = new Commands.RelayCommand<object>(_ => TestNotification());
+            SaveCommand = new RelayCommand<object>(_ => Save());
+            TestNotificationCommand = new RelayCommand<object>(_ => TestNotification());
+            ResetDefaultsCommand = new RelayCommand<object>(_ => ResetDefaults());
             
             // Load existing settings with defaults
             LoadSettings();
@@ -178,6 +182,51 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 System.Diagnostics.Debug.WriteLine($"[NotificationSettings] Save error: {ex.Message}");
                 CustomMessageBox.Show(
                     $"Failed to save settings: {ex.Message}",
+                    "Error",
+                    CustomMessageBox.MessageType.Error
+                );
+            }
+        }
+
+        /// <summary>
+        /// Resets ONLY notification settings to defaults without affecting other settings
+        /// </summary>
+        private void ResetDefaults()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[NotificationSettings] Resetting notification settings to defaults...");
+                
+                // Load current config
+                var cfg = _settingsService.LoadSettings();
+                
+                // Reset ONLY notification settings to defaults
+                cfg.Notification ??= new Models.NotificationSettings();
+                cfg.Notification.EnableNotifications = true;
+                cfg.Notification.EnableSound = true;
+                cfg.Notification.AutoDismissNotifications = true;
+                cfg.Notification.ShowOnAllWorkspaces = false;
+                
+                // Save config (keeps other settings intact)
+                _settingsService.SaveSettings(cfg);
+                
+                // Reload notification settings
+                LoadSettings();
+                
+                System.Diagnostics.Debug.WriteLine("[NotificationSettings] Notification settings reset to defaults");
+                
+                // Show info message
+                CustomMessageBox.Show(
+                    "Notification settings have been reset to defaults!",
+                    "Reset Complete",
+                    CustomMessageBox.MessageType.Info
+                );
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[NotificationSettings] Reset error: {ex.Message}");
+                CustomMessageBox.Show(
+                    $"Failed to reset notification settings: {ex.Message}",
                     "Error",
                     CustomMessageBox.MessageType.Error
                 );

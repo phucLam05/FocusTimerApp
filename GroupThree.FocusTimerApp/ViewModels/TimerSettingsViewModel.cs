@@ -125,6 +125,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         }
 
         public ICommand SaveCommand { get; }
+        public ICommand ResetDefaultsCommand { get; }
 
         /// <summary>
         /// Constructor for DI without TimerService (used in Settings window)
@@ -142,8 +143,9 @@ namespace GroupThree.FocusTimerApp.ViewModels
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _timerService = timerService;
             
-            // Initialize command first
+            // Initialize commands first
             SaveCommand = new RelayCommand<object>(_ => Save());
+            ResetDefaultsCommand = new RelayCommand<object>(_ => ResetDefaults());
             
             // Load settings from config
             LoadSettings();
@@ -191,10 +193,13 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 if (!ValidateSettings())
                 {
                     CustomMessageBox.Show(
-                        "Please enter valid positive numbers for all timer durations.",
+                        "Please enter valid positive numbers for all timer durations. Letters and special characters are not allowed.",
                         "Invalid Input",
-                        CustomMessageBox.MessageType.Warning
+                        CustomMessageBox.MessageType.Error
                     );
+                    
+                    // Reload settings to reset invalid values
+                    LoadSettings();
                     return;
                 }
 
@@ -224,6 +229,54 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 System.Diagnostics.Debug.WriteLine($"[TimerSettings] Save error: {ex.Message}");
                 CustomMessageBox.Show(
                     $"Failed to save settings: {ex.Message}",
+                    "Error",
+                    CustomMessageBox.MessageType.Error
+                );
+            }
+        }
+
+        /// <summary>
+        /// Resets ONLY timer settings to default values without affecting other settings
+        /// </summary>
+        private void ResetDefaults()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[TimerSettings] Resetting timer settings to defaults...");
+                
+                // Load current config
+                var cfg = _settingsService.LoadSettings();
+                
+                // Reset ONLY timer settings to defaults
+                cfg.TimerSettings.WorkDuration = 25;
+                cfg.TimerSettings.BreakDuration = 5;
+                cfg.TimerSettings.LongBreakDuration = 15;
+                cfg.TimerSettings.LongBreakEvery = 4;
+                cfg.TimerSettings.TrackingInterval = 15;
+                
+                // Save config (keeps other settings intact)
+                _settingsService.SaveSettings(cfg);
+                
+                // Reload timer settings from config
+                LoadSettings();
+                
+                // Sync with TimerService if available
+                SyncToTimerService();
+                
+                System.Diagnostics.Debug.WriteLine("[TimerSettings] Timer settings reset to defaults");
+                
+                // Show info message
+                CustomMessageBox.Show(
+                    "Timer settings have been reset to defaults!",
+                    "Reset Complete",
+                    CustomMessageBox.MessageType.Info
+                );
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[TimerSettings] Reset error: {ex.Message}");
+                CustomMessageBox.Show(
+                    $"Failed to reset timer settings: {ex.Message}",
                     "Error",
                     CustomMessageBox.MessageType.Error
                 );

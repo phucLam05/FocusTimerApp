@@ -60,13 +60,17 @@ namespace GroupThree.FocusTimerApp.Services
                 return;
             }
 
-            // Clear previous registration flags in model
-            foreach (var h in hotkeys) h.IsRegistered = false;
-
             foreach (var binding in hotkeys)
             {
                 try
                 {
+                    // Skip empty hotkeys
+                    if (string.IsNullOrEmpty(binding.Key))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[HotkeyService] Skipping {binding.ActionName} - no key set");
+                        continue;
+                    }
+
                     uint modifiers = 0;
                     if (binding.ParsedModifiers.HasFlag(ModifierKeys.Control)) modifiers |= HotKeyHelpers.MOD_CONTROL;
                     if (binding.ParsedModifiers.HasFlag(ModifierKeys.Alt)) modifiers |= HotKeyHelpers.MOD_ALT;
@@ -74,13 +78,16 @@ namespace GroupThree.FocusTimerApp.Services
                     if (binding.ParsedModifiers.HasFlag(ModifierKeys.Windows)) modifiers |= HotKeyHelpers.MOD_WIN;
 
                     bool success = RegisterHotkey(binding, modifiers, binding.ParsedKey, out int id);
-                    binding.IsRegistered = success;
+                    
+                    System.Diagnostics.Debug.WriteLine($"[HotkeyService] {binding.ActionName} registered={success}");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Failed to register hotkey {binding.ActionName}: {ex.Message}");
                 }
             }
+            
+            System.Diagnostics.Debug.WriteLine($"[HotkeyService] Registered {hotkeys.Count} hotkeys");
         }
 
         // ==============================
@@ -148,14 +155,6 @@ namespace GroupThree.FocusTimerApp.Services
             }
 
             _registeredHotkeys.Clear();
-
-            // Clear registration flags in model
-            var hotkeys = _settingsService.LoadHotkeys();
-            if (hotkeys != null)
-            {
-                foreach (var h in hotkeys) h.IsRegistered = false;
-            }
-
             Console.WriteLine("All hotkeys unregistered.");
         }
 

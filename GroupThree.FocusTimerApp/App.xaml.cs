@@ -117,7 +117,10 @@ namespace GroupThree.FocusTimerApp
                 var theme = sp.GetRequiredService<IThemeService>();
                 var timer = sp.GetRequiredService<TimerService>();
                 var notification = sp.GetRequiredService<INotificationService>();
+                
+                // ✅ Get the ACTUAL HotkeyService instance that was initialized at startup
                 var hotkey = (Application.Current as App)?.HotkeyServiceInstance;
+                
                 var vm = new SettingsViewModel(settings, hotkey, theme, timer, notification);
                 var win = new SettingsWindow();
                 win.DataContext = vm;

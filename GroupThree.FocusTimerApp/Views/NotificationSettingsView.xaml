@@ -152,6 +152,13 @@
 
         <!-- Action Buttons -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Reset Defaults" 
+                    Command="{Binding ResetDefaultsCommand}" 
+                    Style="{StaticResource ModernButton}"
+                    Width="130"
+                    Height="38"
+                    Margin="0,0,8,0" />
+            
             <Button Content="Test Notification" 
                     Command="{Binding TestNotificationCommand}" 
                     Style="{StaticResource ModernButton}"

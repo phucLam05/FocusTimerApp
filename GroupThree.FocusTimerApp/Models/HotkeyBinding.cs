@@ -17,20 +17,91 @@ namespace GroupThree.FocusTimerApp.Models
         private string _modifiers = string.Empty;
         private string _description = string.Empty;
         private bool _isRegistered = false;
+        private string _displayText = string.Empty;
+
+        // Add constructor to ensure DisplayText is initialized
+        public HotkeyBinding()
+        {
+            // Initialize DisplayText when object is created
+            UpdateDisplayText();
+        }
 
         public string ActionName { get => _actionName; set => SetField(ref _actionName, value); }
-        public string Key { get => _key; set { if (SetField(ref _key, value)) OnPropertyChanged(nameof(ParsedKey)); } }
-        public string Modifiers { get => _modifiers; set { if (SetField(ref _modifiers, value)) OnPropertyChanged(nameof(ParsedModifiers)); } }
+        
+        public string Key 
+        { 
+            get => _key; 
+            set 
+            { 
+                if (SetField(ref _key, value)) 
+                {
+                    UpdateDisplayText();
+                    OnPropertyChanged(nameof(ParsedKey));
+                    OnPropertyChanged(nameof(HotkeyString));
+                } 
+            } 
+        }
+        
+        public string Modifiers 
+        { 
+            get => _modifiers; 
+            set 
+            { 
+                if (SetField(ref _modifiers, value)) 
+                {
+                    UpdateDisplayText();
+                    OnPropertyChanged(nameof(ParsedModifiers));
+                    OnPropertyChanged(nameof(HotkeyString));
+                } 
+            } 
+        }
+        
         public string Description { get => _description; set => SetField(ref _description, value); }
+
+        /// <summary>
+        /// Simple string property for UI display - THIS WILL WORK!
+        /// </summary>
+        [JsonIgnore]
+        public string DisplayText
+        {
+            get 
+            {
+                // If _displayText is empty, recalculate it
+                if (string.IsNullOrEmpty(_displayText))
+                {
+                    UpdateDisplayText();
+                }
+                return _displayText;
+            }
+            set => SetField(ref _displayText, value);
+        }
+
+        private void UpdateDisplayText()
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(Modifiers))
+            {
+                parts.Add(Modifiers);
+            }
+            if (!string.IsNullOrEmpty(Key))
+            {
+                parts.Add(Key);
+            }
+            var newDisplayText = string.Join("+", parts);
+            if (_displayText != newDisplayText)
+            {
+                _displayText = newDisplayText;
+                OnPropertyChanged(nameof(DisplayText));
+                System.Diagnostics.Debug.WriteLine($"[HotkeyBinding] DisplayText updated to: '{_displayText}' for {ActionName}");
+            }
+        }
 
         [JsonIgnore]
         public KeyEnum ParsedKey
         {
             get
             {
-                return Enum.TryParse(Key, true, out KeyEnum parsed)
-                    ? parsed
-                    : KeyEnum.None;
+                return Enum.TryParse(Key, true, out KeyEnum parsed) ? parsed : KeyEnum.None;
             }
         }
 
@@ -80,6 +151,7 @@ namespace GroupThree.FocusTimerApp.Models
                 if (ParsedModifiers.HasFlag(ModifierKeys.Shift)) parts.Add("Shift");
                 if (ParsedModifiers.HasFlag(ModifierKeys.Windows)) parts.Add("Win");
                 if (ParsedKey != KeyEnum.None) parts.Add(ParsedKey.ToString());
+                
                 return string.Join("+", parts);
             }
             set
