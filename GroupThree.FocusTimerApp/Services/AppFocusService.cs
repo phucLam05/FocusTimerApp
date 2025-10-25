@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Timers;
 using GroupThree.FocusTimerApp.Models;
 
@@ -11,26 +12,32 @@ namespace GroupThree.FocusTimerApp.Services
 {
     public class AppFocusService
     {
-        public event Action<RegisteredAppModel>? EnteredWorkZone;
-        public event Action<RegisteredAppModel>? LeftWorkZone;
+        public event Action? EnteredWorkZone;
+        public event Action? LeftWorkZone;
 
         private readonly List<RegisteredAppModel> _registeredApps = new();
-        private readonly HashSet<string> _shownWelcomeApps = new(StringComparer.OrdinalIgnoreCase);
-
-        private readonly System.Timers.Timer _focusCheckTimer;
         private readonly object _lock = new();
 
         private bool _isInWorkZone = false;
-        private RegisteredAppModel? _currentFocusedApp;
-        private string? _lastExePathNormalized;
-
-        // Thời gian ngưỡng (ms) để coi là "rời thật sự" khi focus ra ngoài (tránh bật tắt rất nhanh)
-        private const int LeaveThresholdMs = 700;
         private DateTime? _leftCandidateAt = null;
+        private const int LeaveThresholdMs = 700;
+
+        private readonly System.Timers.Timer _focusCheckTimer;
+        private readonly string _saveFilePath;
 
         public AppFocusService()
         {
-            _focusCheckTimer = new System.Timers.Timer(500); // kiểm tra 500ms cho responsiveness tốt
+            // ✅ setup file JSON
+            string appDataDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "GroupThree.FocusTimerApp");
+            Directory.CreateDirectory(appDataDir);
+            _saveFilePath = Path.Combine(appDataDir, "registered_apps.json");
+
+            LoadRegisteredApps();
+
+            // ✅ khởi động timer kiểm tra app foreground
+            _focusCheckTimer = new System.Timers.Timer(500);
             _focusCheckTimer.Elapsed += CheckForeground;
             _focusCheckTimer.AutoReset = true;
             _focusCheckTimer.Start();
@@ -44,7 +51,10 @@ namespace GroupThree.FocusTimerApp.Services
             lock (_lock)
             {
                 if (!_registeredApps.Any(a => NormalizePath(a.ExecutablePath) == NormalizePath(app.ExecutablePath)))
+                {
                     _registeredApps.Add(app);
+                    SaveRegisteredApps();
+                }
             }
         }
 
@@ -55,8 +65,11 @@ namespace GroupThree.FocusTimerApp.Services
             lock (_lock)
             {
                 var app = _registeredApps.FirstOrDefault(a => NormalizePath(a.ExecutablePath) == norm);
-                if (app != null) _registeredApps.Remove(app);
-                _shownWelcomeApps.Remove(norm);
+                if (app != null)
+                {
+                    _registeredApps.Remove(app);
+                    SaveRegisteredApps();
+                }
             }
         }
 
@@ -67,118 +80,104 @@ namespace GroupThree.FocusTimerApp.Services
                 string? exePath = GetForegroundAppPath();
                 if (string.IsNullOrEmpty(exePath))
                 {
-                    // If no foreground, treat as outside
-                    HandleOutside(null);
+                    HandleOutside();
                     return;
                 }
 
                 string norm = NormalizePath(exePath);
+                bool isRegistered;
 
-                RegisteredAppModel? focusedRegistered;
                 lock (_lock)
                 {
-                    focusedRegistered = _registeredApps
-                        .FirstOrDefault(a => NormalizePath(a.ExecutablePath) == norm);
+                    isRegistered = _registeredApps.Any(a => NormalizePath(a.ExecutablePath) == norm);
                 }
 
-                if (focusedRegistered != null)
+                if (isRegistered)
                 {
-                    // We're focusing on a registered app (in work zone)
-                    // reset left-candidate because we're in-zone now
+                    // Đang trong vùng làm việc
                     _leftCandidateAt = null;
 
                     if (!_isInWorkZone)
                     {
-                        // We were outside, now entered work zone -> start new session
                         _isInWorkZone = true;
-                        _currentFocusedApp = focusedRegistered;
-
-                        // Clear shown list only when entering after being outside
-                        // (this ensures apps can be re-notified in a new session)
-                        _shownWelcomeApps.Clear();
-
-                        // Notify if not shown before in this new session
-                        if (!_shownWelcomeApps.Contains(norm))
-                        {
-                            _shownWelcomeApps.Add(norm);
-                            EnteredWorkZone?.Invoke(focusedRegistered);
-                        }
+                        EnteredWorkZone?.Invoke();
                     }
-                    else
-                    {
-                        // already in work zone
-                        if (_currentFocusedApp == null || NormalizePath(_currentFocusedApp.ExecutablePath) != norm)
-                        {
-                            // switched to a different registered app
-                            _currentFocusedApp = focusedRegistered;
-
-                            if (!_shownWelcomeApps.Contains(norm))
-                            {
-                                _shownWelcomeApps.Add(norm);
-                                EnteredWorkZone?.Invoke(focusedRegistered);
-                            }
-                        }
-                        // else focusing same registered app -> nothing to do
-                    }
-
-                    _lastExePathNormalized = norm;
                 }
                 else
                 {
-                    // Foreground is NOT a registered app -> candidate to leave
-                    HandleOutside(norm);
-                    _lastExePathNormalized = norm;
+                    HandleOutside();
                 }
             }
             catch
             {
-                // swallow (access denied etc.)
+                // bỏ qua lỗi truy cập process
             }
         }
 
-        // Handles being outside registered apps, with a small threshold to avoid spurious leave
-        private void HandleOutside(string? currentNorm)
+        private void HandleOutside()
         {
-            // If we were not in work zone already, nothing to do
             if (!_isInWorkZone) return;
 
-            // If we just detected outside, mark candidate time
             if (_leftCandidateAt == null)
             {
                 _leftCandidateAt = DateTime.UtcNow;
                 return;
             }
 
-            // If threshold not elapsed yet, wait
             if ((DateTime.UtcNow - _leftCandidateAt.Value).TotalMilliseconds < LeaveThresholdMs)
                 return;
 
-            // After threshold elapsed -> confirm left
-            var lastApp = _currentFocusedApp;
-            _currentFocusedApp = null;
+            // Xác nhận rời khỏi vùng làm việc
             _isInWorkZone = false;
             _leftCandidateAt = null;
-
-            // clear shown list because new session will start when re-enter
-            _shownWelcomeApps.Clear();
-
-            if (lastApp != null)
-                LeftWorkZone?.Invoke(lastApp);
+            LeftWorkZone?.Invoke();
         }
 
-        // Normalize path to avoid differences in case, relative vs absolute, short vs long paths.
+        // 🔧 JSON persistence
+        private void SaveRegisteredApps()
+        {
+            try
+            {
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                var json = JsonSerializer.Serialize(_registeredApps, options);
+                File.WriteAllText(_saveFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[AppFocusService] Save failed: {ex.Message}");
+            }
+        }
+
+        private void LoadRegisteredApps()
+        {
+            try
+            {
+                if (!File.Exists(_saveFilePath)) return;
+                var json = File.ReadAllText(_saveFilePath);
+                var apps = JsonSerializer.Deserialize<List<RegisteredAppModel>>(json);
+                if (apps != null)
+                {
+                    _registeredApps.Clear();
+                    _registeredApps.AddRange(apps);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[AppFocusService] Load failed: {ex.Message}");
+            }
+        }
+
+        // 🔧 utils
         private static string NormalizePath(string? path)
         {
             if (string.IsNullOrEmpty(path)) return string.Empty;
             try
             {
-                // GetFullPath and lower-case to normalize.
-                var full = Path.GetFullPath(path);
-                return full.ToLowerInvariant();
+                return Path.GetFullPath(path).ToLowerInvariant();
             }
             catch
             {
-                try { return path.ToLowerInvariant(); } catch { return path ?? string.Empty; }
+                return path?.ToLowerInvariant() ?? string.Empty;
             }
         }
 

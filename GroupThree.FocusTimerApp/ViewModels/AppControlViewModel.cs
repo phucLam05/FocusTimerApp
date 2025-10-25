@@ -53,28 +53,25 @@ namespace GroupThree.FocusTimerApp.ViewModels
             LoadRegisteredApps();
 
             // 🟢 Lắng nghe sự kiện từ AppFocusService
-            _focusService.EnteredWorkZone += app =>
+            _focusService.EnteredWorkZone += () =>
             {
                 if (_isShowingMessage) return;
                 _isShowingMessage = true;
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    // ✅ Hiển thị thông báo góc phải màn hình
                     var notify = new NotifyIcon
                     {
                         Icon = System.Drawing.SystemIcons.Information,
                         Visible = true,
                         BalloonTipTitle = "Focus Timer",
-                        BalloonTipText = $"Chào mừng quay lại {app.AppName}"
+                        BalloonTipText = "Chào mừng quay lại vùng làm việc!"
                     };
                     notify.ShowBalloonTip(3000);
 
-                    // ✅ Resume timer
                     if (!_timerService.IsRunning)
                         _timerService.Resume();
 
-                    // 🔻 Ẩn notify sau khi hiển thị xong
                     Task.Delay(3500).ContinueWith(_ =>
                     {
                         notify.Visible = false;
@@ -85,7 +82,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 Task.Delay(2000).ContinueWith(_ => _isShowingMessage = false);
             };
 
-            _focusService.LeftWorkZone += app =>
+            _focusService.LeftWorkZone += () =>
             {
                 if (_isShowingMessage) return;
                 _isShowingMessage = true;
@@ -94,14 +91,13 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 {
                     var notify = new NotifyIcon
                     {
-                        Icon = System.Drawing.SystemIcons.Information,
+                        Icon = System.Drawing.SystemIcons.Warning,
                         Visible = true,
                         BalloonTipTitle = "Focus Timer",
-                        BalloonTipText = $"Bạn đã rời khỏi vùng làm việc ({app.AppName})"
+                        BalloonTipText = "Bạn đã rời khỏi vùng làm việc!"
                     };
                     notify.ShowBalloonTip(3000);
 
-                    // ✅ Pause timer
                     if (_timerService.IsRunning)
                         _timerService.Pause();
 
@@ -114,6 +110,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
                 Task.Delay(2000).ContinueWith(_ => _isShowingMessage = false);
             };
+
 
         }
 
