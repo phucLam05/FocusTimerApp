@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Timers;
@@ -14,20 +15,24 @@ namespace GroupThree.FocusTimerApp.Services
         public event Action<RegisteredAppModel>? LeftWorkZone;
 
         private readonly List<RegisteredAppModel> _registeredApps = new();
-        private RegisteredAppModel? _currentFocusedApp;
-
-        // trạng thái chung: đang ở trong work zone hay không
-        private bool _isInWorkZone = false;
-
-        // danh sách các exePath đã được thông báo trong session hiện tại
-        private readonly HashSet<string> _notifiedApps = new(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _shownWelcomeApps = new(StringComparer.OrdinalIgnoreCase);
 
         private readonly System.Timers.Timer _focusCheckTimer;
+        private readonly object _lock = new();
+
+        private bool _isInWorkZone = false;
+        private RegisteredAppModel? _currentFocusedApp;
+        private string? _lastExePathNormalized;
+
+        // Thời gian ngưỡng (ms) để coi là "rời thật sự" khi focus ra ngoài (tránh bật tắt rất nhanh)
+        private const int LeaveThresholdMs = 700;
+        private DateTime? _leftCandidateAt = null;
 
         public AppFocusService()
         {
-            _focusCheckTimer = new System.Timers.Timer(1000); // check mỗi 1s
+            _focusCheckTimer = new System.Timers.Timer(500); // kiểm tra 500ms cho responsiveness tốt
             _focusCheckTimer.Elapsed += CheckForeground;
+            _focusCheckTimer.AutoReset = true;
             _focusCheckTimer.Start();
         }
 
@@ -35,89 +40,162 @@ namespace GroupThree.FocusTimerApp.Services
 
         public void RegisterApp(RegisteredAppModel app)
         {
-            if (!_registeredApps.Any(a => a.ExecutablePath.Equals(app.ExecutablePath, StringComparison.OrdinalIgnoreCase)))
-                _registeredApps.Add(app);
+            if (app == null) return;
+            lock (_lock)
+            {
+                if (!_registeredApps.Any(a => NormalizePath(a.ExecutablePath) == NormalizePath(app.ExecutablePath)))
+                    _registeredApps.Add(app);
+            }
         }
 
         public void UnregisterApp(string exePath)
         {
-            var app = _registeredApps.FirstOrDefault(a => a.ExecutablePath.Equals(exePath, StringComparison.OrdinalIgnoreCase));
-            if (app != null)
-                _registeredApps.Remove(app);
-
-            // nếu bỏ đăng ký app đang nằm trong danh sách đã thông báo, cũng loại khỏi set
-            _notifiedApps.Remove(exePath);
+            if (string.IsNullOrEmpty(exePath)) return;
+            var norm = NormalizePath(exePath);
+            lock (_lock)
+            {
+                var app = _registeredApps.FirstOrDefault(a => NormalizePath(a.ExecutablePath) == norm);
+                if (app != null) _registeredApps.Remove(app);
+                _shownWelcomeApps.Remove(norm);
+            }
         }
 
         private void CheckForeground(object? sender, ElapsedEventArgs e)
         {
             try
             {
-                IntPtr hWnd = GetForegroundWindow();
-                if (hWnd == IntPtr.Zero) return;
-
-                GetWindowThreadProcessId(hWnd, out uint pid);
-                var proc = Process.GetProcessById((int)pid);
-                string exePath = proc.MainModule?.FileName ?? string.Empty;
-
-                // kiểm tra app hiện tại có nằm trong registered list không
-                var registered = _registeredApps.FirstOrDefault(a =>
-                    exePath.Equals(a.ExecutablePath, StringComparison.OrdinalIgnoreCase));
-
-                if (registered != null)
+                string? exePath = GetForegroundAppPath();
+                if (string.IsNullOrEmpty(exePath))
                 {
-                    // đang focus 1 app thuộc work zone
-                    // nếu trước đó đang ở ngoài vùng -> ta coi đây là "vào vùng làm việc" (một session mới)
+                    // If no foreground, treat as outside
+                    HandleOutside(null);
+                    return;
+                }
+
+                string norm = NormalizePath(exePath);
+
+                RegisteredAppModel? focusedRegistered;
+                lock (_lock)
+                {
+                    focusedRegistered = _registeredApps
+                        .FirstOrDefault(a => NormalizePath(a.ExecutablePath) == norm);
+                }
+
+                if (focusedRegistered != null)
+                {
+                    // We're focusing on a registered app (in work zone)
+                    // reset left-candidate because we're in-zone now
+                    _leftCandidateAt = null;
+
                     if (!_isInWorkZone)
                     {
+                        // We were outside, now entered work zone -> start new session
                         _isInWorkZone = true;
-                        _currentFocusedApp = registered;
-                        _currentFocusedApp.LastActive = DateTime.Now;
+                        _currentFocusedApp = focusedRegistered;
 
-                        // trước khi notify app này, đảm bảo nó chưa được notify trong session hiện tại
-                        if (!_notifiedApps.Contains(registered.ExecutablePath))
+                        // Clear shown list only when entering after being outside
+                        // (this ensures apps can be re-notified in a new session)
+                        _shownWelcomeApps.Clear();
+
+                        // Notify if not shown before in this new session
+                        if (!_shownWelcomeApps.Contains(norm))
                         {
-                            _notifiedApps.Add(registered.ExecutablePath);
-                            EnteredWorkZone?.Invoke(registered);
+                            _shownWelcomeApps.Add(norm);
+                            EnteredWorkZone?.Invoke(focusedRegistered);
                         }
                     }
                     else
                     {
-                        // đã ở trong work zone rồi: update current focused app
-                        _currentFocusedApp = registered;
-                        _currentFocusedApp.LastActive = DateTime.Now;
-
-                        // nếu app này chưa được thông báo trong session hiện tại -> thông báo
-                        if (!_notifiedApps.Contains(registered.ExecutablePath))
+                        // already in work zone
+                        if (_currentFocusedApp == null || NormalizePath(_currentFocusedApp.ExecutablePath) != norm)
                         {
-                            _notifiedApps.Add(registered.ExecutablePath);
-                            EnteredWorkZone?.Invoke(registered);
+                            // switched to a different registered app
+                            _currentFocusedApp = focusedRegistered;
+
+                            if (!_shownWelcomeApps.Contains(norm))
+                            {
+                                _shownWelcomeApps.Add(norm);
+                                EnteredWorkZone?.Invoke(focusedRegistered);
+                            }
                         }
-                        // nếu đã thông báo rồi -> không notify (giữ im lặng)
+                        // else focusing same registered app -> nothing to do
                     }
+
+                    _lastExePathNormalized = norm;
                 }
                 else
                 {
-                    // focus vào app không thuộc work zone
-                    if (_isInWorkZone)
-                    {
-                        // rời khỏi vùng làm việc hoàn toàn -> trigger LeftWorkZone cho last app (nếu có)
-                        var lastApp = _currentFocusedApp;
-                        _currentFocusedApp = null;
-                        _isInWorkZone = false;
-
-                        // clear danh sách các app đã thông báo trong session trước đó
-                        _notifiedApps.Clear();
-
-                        if (lastApp != null)
-                            LeftWorkZone?.Invoke(lastApp);
-                    }
-                    // else: vẫn đang ngoài vùng -> không làm gì
+                    // Foreground is NOT a registered app -> candidate to leave
+                    HandleOutside(norm);
+                    _lastExePathNormalized = norm;
                 }
             }
             catch
             {
-                // bỏ qua lỗi nhỏ (system process, access denied,...)
+                // swallow (access denied etc.)
+            }
+        }
+
+        // Handles being outside registered apps, with a small threshold to avoid spurious leave
+        private void HandleOutside(string? currentNorm)
+        {
+            // If we were not in work zone already, nothing to do
+            if (!_isInWorkZone) return;
+
+            // If we just detected outside, mark candidate time
+            if (_leftCandidateAt == null)
+            {
+                _leftCandidateAt = DateTime.UtcNow;
+                return;
+            }
+
+            // If threshold not elapsed yet, wait
+            if ((DateTime.UtcNow - _leftCandidateAt.Value).TotalMilliseconds < LeaveThresholdMs)
+                return;
+
+            // After threshold elapsed -> confirm left
+            var lastApp = _currentFocusedApp;
+            _currentFocusedApp = null;
+            _isInWorkZone = false;
+            _leftCandidateAt = null;
+
+            // clear shown list because new session will start when re-enter
+            _shownWelcomeApps.Clear();
+
+            if (lastApp != null)
+                LeftWorkZone?.Invoke(lastApp);
+        }
+
+        // Normalize path to avoid differences in case, relative vs absolute, short vs long paths.
+        private static string NormalizePath(string? path)
+        {
+            if (string.IsNullOrEmpty(path)) return string.Empty;
+            try
+            {
+                // GetFullPath and lower-case to normalize.
+                var full = Path.GetFullPath(path);
+                return full.ToLowerInvariant();
+            }
+            catch
+            {
+                try { return path.ToLowerInvariant(); } catch { return path ?? string.Empty; }
+            }
+        }
+
+        private static string? GetForegroundAppPath()
+        {
+            try
+            {
+                IntPtr hWnd = GetForegroundWindow();
+                if (hWnd == IntPtr.Zero) return null;
+
+                _ = GetWindowThreadProcessId(hWnd, out uint pid);
+                var process = Process.GetProcessById((int)pid);
+                return process.MainModule?.FileName;
+            }
+            catch
+            {
+                return null;
             }
         }
 
