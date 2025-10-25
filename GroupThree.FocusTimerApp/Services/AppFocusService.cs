@@ -15,6 +15,13 @@ namespace GroupThree.FocusTimerApp.Services
 
         private readonly List<RegisteredAppModel> _registeredApps = new();
         private RegisteredAppModel? _currentFocusedApp;
+
+        // trạng thái chung: đang ở trong work zone hay không
+        private bool _isInWorkZone = false;
+
+        // danh sách các exePath đã được thông báo trong session hiện tại
+        private readonly HashSet<string> _notifiedApps = new(StringComparer.OrdinalIgnoreCase);
+
         private readonly System.Timers.Timer _focusCheckTimer;
 
         public AppFocusService()
@@ -28,15 +35,18 @@ namespace GroupThree.FocusTimerApp.Services
 
         public void RegisterApp(RegisteredAppModel app)
         {
-            if (!_registeredApps.Any(a => a.ExecutablePath == app.ExecutablePath))
+            if (!_registeredApps.Any(a => a.ExecutablePath.Equals(app.ExecutablePath, StringComparison.OrdinalIgnoreCase)))
                 _registeredApps.Add(app);
         }
 
         public void UnregisterApp(string exePath)
         {
-            var app = _registeredApps.FirstOrDefault(a => a.ExecutablePath == exePath);
+            var app = _registeredApps.FirstOrDefault(a => a.ExecutablePath.Equals(exePath, StringComparison.OrdinalIgnoreCase));
             if (app != null)
                 _registeredApps.Remove(app);
+
+            // nếu bỏ đăng ký app đang nằm trong danh sách đã thông báo, cũng loại khỏi set
+            _notifiedApps.Remove(exePath);
         }
 
         private void CheckForeground(object? sender, ElapsedEventArgs e)
@@ -50,27 +60,59 @@ namespace GroupThree.FocusTimerApp.Services
                 var proc = Process.GetProcessById((int)pid);
                 string exePath = proc.MainModule?.FileName ?? string.Empty;
 
+                // kiểm tra app hiện tại có nằm trong registered list không
                 var registered = _registeredApps.FirstOrDefault(a =>
                     exePath.Equals(a.ExecutablePath, StringComparison.OrdinalIgnoreCase));
 
-                // 🟢 Nếu focus vào app khác hẳn so với trước đó
-                if (registered != _currentFocusedApp)
+                if (registered != null)
                 {
-                    // Nếu rời khỏi app cũ
-                    if (_currentFocusedApp != null)
-                        LeftWorkZone?.Invoke(_currentFocusedApp);
-
-                    // Nếu app mới thuộc vùng focus
-                    if (registered != null)
+                    // đang focus 1 app thuộc work zone
+                    // nếu trước đó đang ở ngoài vùng -> ta coi đây là "vào vùng làm việc" (một session mới)
+                    if (!_isInWorkZone)
                     {
+                        _isInWorkZone = true;
                         _currentFocusedApp = registered;
                         _currentFocusedApp.LastActive = DateTime.Now;
-                        EnteredWorkZone?.Invoke(registered);
+
+                        // trước khi notify app này, đảm bảo nó chưa được notify trong session hiện tại
+                        if (!_notifiedApps.Contains(registered.ExecutablePath))
+                        {
+                            _notifiedApps.Add(registered.ExecutablePath);
+                            EnteredWorkZone?.Invoke(registered);
+                        }
                     }
                     else
                     {
-                        _currentFocusedApp = null;
+                        // đã ở trong work zone rồi: update current focused app
+                        _currentFocusedApp = registered;
+                        _currentFocusedApp.LastActive = DateTime.Now;
+
+                        // nếu app này chưa được thông báo trong session hiện tại -> thông báo
+                        if (!_notifiedApps.Contains(registered.ExecutablePath))
+                        {
+                            _notifiedApps.Add(registered.ExecutablePath);
+                            EnteredWorkZone?.Invoke(registered);
+                        }
+                        // nếu đã thông báo rồi -> không notify (giữ im lặng)
                     }
+                }
+                else
+                {
+                    // focus vào app không thuộc work zone
+                    if (_isInWorkZone)
+                    {
+                        // rời khỏi vùng làm việc hoàn toàn -> trigger LeftWorkZone cho last app (nếu có)
+                        var lastApp = _currentFocusedApp;
+                        _currentFocusedApp = null;
+                        _isInWorkZone = false;
+
+                        // clear danh sách các app đã thông báo trong session trước đó
+                        _notifiedApps.Clear();
+
+                        if (lastApp != null)
+                            LeftWorkZone?.Invoke(lastApp);
+                    }
+                    // else: vẫn đang ngoài vùng -> không làm gì
                 }
             }
             catch

@@ -5,6 +5,7 @@ namespace GroupThree.FocusTimerApp.Commands
 {
     public class RelayCommand : ICommand
     {
+        // A command that can be executed without parameters.
         private readonly Action _execute;
         private readonly Func<bool>? _canExecute;
 
