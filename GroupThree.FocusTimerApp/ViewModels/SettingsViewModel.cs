@@ -35,6 +35,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public ICommand ShowTimerCommand { get; }
         public ICommand ShowHotkeyCommand { get; }
         public ICommand ReloadHotkeysCommand { get; }
+        public ICommand ShowExportImportCommand { get; }
 
         // Only DI constructor
         public SettingsViewModel(SettingsService settingsService, HotkeyService? hotkeyService)
@@ -47,6 +48,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
             ShowTimerCommand = new RelayCommand<object>(_ => ShowTimer());
             ShowHotkeyCommand = new RelayCommand<object>(_ => ShowHotkey());
             ReloadHotkeysCommand = new RelayCommand<object>(_ => ReloadHotkeys());
+            ShowExportImportCommand = new RelayCommand<object>(_ => ShowExportImport());
 
             // default view
             ShowGeneral();
@@ -73,6 +75,12 @@ namespace GroupThree.FocusTimerApp.ViewModels
         private void ShowHotkey()
         {
             var vm = new HotkeySettingsViewModel(_settingsService, _hotkeyService);
+            CurrentView = vm;
+        }
+
+        private void ShowExportImport()
+        {
+            var vm = new ExportImportSettingsViewModel(_settingsService, _hotkeyService);
             CurrentView = vm;
         }
 

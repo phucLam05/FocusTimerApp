@@ -20,6 +20,9 @@
         <DataTemplate DataType="{x:Type vm:HotkeySettingsViewModel}">
             <views:HotkeySettingsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ExportImportSettingsViewModel}">
+            <views:ExportImportSettingsView />
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
@@ -33,6 +36,8 @@
             <Button Content="Notification" Margin="5" Command="{Binding ShowNotificationCommand}" />
             <Button Content="Timer" Margin="5" Command="{Binding ShowTimerCommand}" />
             <Button Content="Hotkey" Margin="5" Command="{Binding ShowHotkeyCommand}" />
+            <Separator Margin="5" />
+            <Button Content="Import/Export code" Margin="5" Command="{Binding ShowExportImportCommand}" />
         </StackPanel>
 
         <Grid Grid.Column="1">
