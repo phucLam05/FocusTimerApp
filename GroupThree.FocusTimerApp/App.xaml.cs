@@ -83,8 +83,12 @@ namespace GroupThree.FocusTimerApp
             // Coordinator to centralize notifications + timer control
             services.AddSingleton<FocusZoneCoordinator>();
 
-            // WindowService needs service provider
             services.AddSingleton<WindowService>(sp => new WindowService(sp));
+
+            // Media library service
+            services.AddSingleton<IMp3LibraryService, Mp3LibraryService>();
+            services.AddSingleton<IPlaylistStorageService, PlaylistStorageService>();
+            services.AddSingleton<IMediaPlaybackService, MediaPlaybackService>();
 
             // Register OverlayViewModel and OverlayService factory
             services.AddTransient<OverlayViewModel>();
@@ -97,7 +101,10 @@ namespace GroupThree.FocusTimerApp
                 var windowSvc = sp.GetRequiredService<WindowService>();
                 var overlay = sp.GetRequiredService<IOverlayService>();
                 var settings = sp.GetRequiredService<SettingsService>();
-                return new MainViewModel(timer, windowSvc, overlay, settings);
+                var library = sp.GetRequiredService<IMp3LibraryService>();
+                var playlist = sp.GetRequiredService<IPlaylistStorageService>();
+                var playback = sp.GetRequiredService<IMediaPlaybackService>();
+                return new MainViewModel(timer, windowSvc, overlay, settings, library, playlist, playback);
             });
 
             // windows

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Focus Timer" Height="350" Width="400">
+        Title="Focus Timer" Height="480" Width="600">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -12,16 +12,39 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ComboBox Grid.Row="0" HorizontalAlignment="Left" Width="150"
-                  Margin="0,0,0,10" SelectedValuePath="Tag" SelectedValue="{Binding SelectedMode, Mode=TwoWay}">
-            <ComboBoxItem Content="Basic" Tag="Basic" />
-            <ComboBoxItem Content="Pomodoro" Tag="Pomodoro" />
-        </ComboBox>
+        <DockPanel Grid.Row="0" Margin="0,0,0,10">
+            <ComboBox HorizontalAlignment="Left" Width="150"
+                      SelectedValuePath="Tag" SelectedValue="{Binding SelectedMode, Mode=TwoWay}">
+                <ComboBoxItem Content="Basic" Tag="Basic" />
+                <ComboBoxItem Content="Pomodoro" Tag="Pomodoro" />
+            </ComboBox>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                <Button Content="Add" Width="60" Margin="8,0,0,0" Command="{Binding AddTrackCommand}" />
+                <Button Content="Remove" Width="80" Margin="8,0,0,0" Command="{Binding RemoveSelectedTrackCommand}" />
+                <Button Content="Play" Width="60" Margin="8,0,0,0" Command="{Binding PlaySelectedTrackCommand}" />
+                <Button Content="Stop" Width="60" Margin="8,0,0,0" Command="{Binding StopPlaybackCommand}" />
+            </StackPanel>
+        </DockPanel>
 
-        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="{Binding TimeText}" FontSize="36" HorizontalAlignment="Center" />
-            <ProgressBar Width="300" Height="12" Value="{Binding Progress}" Minimum="0" Maximum="1" />
-        </StackPanel>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="{Binding TimeText}" FontSize="36" HorizontalAlignment="Center" />
+                <ProgressBar Width="300" Height="12" Value="{Binding Progress}" Minimum="0" Maximum="1" />
+            </StackPanel>
+
+            <Border Grid.Column="1" Margin="10,0,0,0" Padding="6" BorderBrush="#DDD" BorderThickness="1" CornerRadius="4">
+                <StackPanel>
+                    <TextBlock Text="Tracks" FontWeight="Bold" Margin="0,0,0,6" />
+                    <ListBox ItemsSource="{Binding Tracks}" DisplayMemberPath="Title" Height="260"
+                             SelectedItem="{Binding SelectedTrack, Mode=TwoWay}" />
+                </StackPanel>
+            </Border>
+        </Grid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
             <Button Content="Start" Width="80" Command="{Binding StartCommand}" Margin="4,0" />
