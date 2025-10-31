@@ -16,5 +16,8 @@
         <DataTemplate DataType="{x:Type vm:HotkeySettingsViewModel}">
             <views:HotkeySettingsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AppControlViewModel}">
+            <views:AppControlView />
+        </DataTemplate>
     </Application.Resources>
 </Application>

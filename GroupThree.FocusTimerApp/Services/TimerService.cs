@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Timers;
 
 namespace GroupThree.FocusTimerApp.Services
@@ -24,6 +24,7 @@ namespace GroupThree.FocusTimerApp.Services
     {
         private readonly System.Timers.Timer _timer;
         private DateTime? _startTime;
+        private TimeSpan _elapsedBeforePause = TimeSpan.Zero;
         private TimeSpan _targetDuration = TimeSpan.Zero;
         private bool _isRunning;
         private bool _isInBreak;
@@ -114,7 +115,7 @@ namespace GroupThree.FocusTimerApp.Services
 
                     if (_elapsedSeconds > 0 && ReminderInterval.TotalSeconds > 0 && _elapsedSeconds % (int)ReminderInterval.TotalSeconds == 0)
                     {
-                        ShowNotification($"You've worked for {_elapsedSeconds} seconds � take a short break!");
+                        ShowNotification($"You've worked for {_elapsedSeconds} seconds – take a short break!");
                     }
                 }
             }
@@ -138,7 +139,7 @@ namespace GroupThree.FocusTimerApp.Services
             _startTime = DateTime.UtcNow;
             _isRunning = true;
             _timer.Start();
-            ShowNotification("Break over � time to focus!");
+            ShowNotification("Break over – time to focus!");
         }
 
         private void StartNextBreakAfterWork()
@@ -196,6 +197,10 @@ namespace GroupThree.FocusTimerApp.Services
         public void Pause()
         {
             if (!_isRunning) return;
+
+            // ✅ lưu lại thời gian đã trôi
+            _elapsedBeforePause += (DateTime.UtcNow - _startTime!.Value);
+
             _isRunning = false;
             _timer.Stop();
             if (_startTime.HasValue)
@@ -218,6 +223,7 @@ namespace GroupThree.FocusTimerApp.Services
             _isRunning = false;
             _timer.Stop();
             _startTime = null;
+            _elapsedBeforePause = TimeSpan.Zero;
             _targetDuration = TimeSpan.Zero;
             _isInBreak = false;
             _elapsedSeconds = 0;

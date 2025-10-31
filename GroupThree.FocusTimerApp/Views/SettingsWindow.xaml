@@ -20,6 +20,9 @@
         <DataTemplate DataType="{x:Type vm:HotkeySettingsViewModel}">
             <views:HotkeySettingsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AppControlViewModel}">
+            <views:AppControlView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:ExportImportSettingsViewModel}">
             <views:ExportImportSettingsView />
         </DataTemplate>
@@ -36,6 +39,7 @@
             <Button Content="Notification" Margin="5" Command="{Binding ShowNotificationCommand}" />
             <Button Content="Timer" Margin="5" Command="{Binding ShowTimerCommand}" />
             <Button Content="Hotkey" Margin="5" Command="{Binding ShowHotkeyCommand}" />
+            <Button Content="Focus Zone Apps" Margin="5" Command="{Binding ShowFocusZoneCommand}" />
             <Separator Margin="5" />
             <Button Content="Import/Export code" Margin="5" Command="{Binding ShowExportImportCommand}" />
         </StackPanel>

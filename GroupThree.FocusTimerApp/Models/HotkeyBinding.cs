@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using System.Windows.Input;
 
-// 👇 Thêm dòng này
+// Alias để tránh nhầm Key property với System.Windows.Input.Key
 using KeyEnum = System.Windows.Input.Key;
 
 namespace GroupThree.FocusTimerApp.Models
@@ -18,10 +18,37 @@ namespace GroupThree.FocusTimerApp.Models
         private string _description = string.Empty;
         private bool _isRegistered = false;
 
-        public string ActionName { get => _actionName; set => SetField(ref _actionName, value); }
-        public string Key { get => _key; set { if (SetField(ref _key, value)) OnPropertyChanged(nameof(ParsedKey)); } }
-        public string Modifiers { get => _modifiers; set { if (SetField(ref _modifiers, value)) OnPropertyChanged(nameof(ParsedModifiers)); } }
-        public string Description { get => _description; set => SetField(ref _description, value); }
+        public string ActionName
+        {
+            get => _actionName;
+            set => SetField(ref _actionName, value);
+        }
+
+        public string Key
+        {
+            get => _key;
+            set
+            {
+                if (SetField(ref _key, value))
+                    OnPropertyChanged(nameof(ParsedKey));
+            }
+        }
+
+        public string Modifiers
+        {
+            get => _modifiers;
+            set
+            {
+                if (SetField(ref _modifiers, value))
+                    OnPropertyChanged(nameof(ParsedModifiers));
+            }
+        }
+
+        public string Description
+        {
+            get => _description;
+            set => SetField(ref _description, value);
+        }
 
         [JsonIgnore]
         public KeyEnum ParsedKey
@@ -66,9 +93,13 @@ namespace GroupThree.FocusTimerApp.Models
         }
 
         [JsonIgnore]
-        public bool IsRegistered { get => _isRegistered; set => SetField(ref _isRegistered, value); }
+        public bool IsRegistered
+        {
+            get => _isRegistered;
+            set => SetField(ref _isRegistered, value);
+        }
 
-        // Combined string for UI like "Ctrl+Alt+P". When set, parse into Modifiers and Key.
+        // Chuỗi hiển thị đầy đủ dạng "Ctrl+Alt+S"
         [JsonIgnore]
         public string HotkeyString
         {
@@ -99,18 +130,14 @@ namespace GroupThree.FocusTimerApp.Models
                     return;
                 }
 
-                // last part considered Key, others modifiers
+                // Phần cuối là Key, phần trước là Modifier
                 var keyPart = parts[^1];
                 Key = keyPart;
 
                 if (parts.Length > 1)
-                {
                     Modifiers = string.Join("+", parts[..^1]);
-                }
                 else
-                {
                     Modifiers = string.Empty;
-                }
 
                 OnPropertyChanged(nameof(HotkeyString));
             }
