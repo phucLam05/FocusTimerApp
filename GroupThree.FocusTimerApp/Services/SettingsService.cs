@@ -15,11 +15,45 @@ namespace GroupThree.FocusTimerApp.Services
 
         public SettingsService(string? configPath = null)
         {
-            // Prefer existing json/AppSettings.json if present, otherwise appsettings.json in base dir
-            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            var jsonDirPath = Path.Combine(baseDir, "json", "AppSettings.json");
-            _configPath = configPath
-                ?? (File.Exists(jsonDirPath) ? jsonDirPath : Path.Combine(baseDir, "appsettings.json"));
+            // Default location: %AppData%\FocusTimerApp\AppSettings.json
+            // If legacy config exists in application base folder, migrate it on first run.
+            var appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var targetDir = Path.Combine(appDataDir, "FocusTimerApp");
+            var targetPath = Path.Combine(targetDir, "AppSettings.json");
+
+            if (configPath == null)
+            {
+                try
+                {
+                    Directory.CreateDirectory(targetDir);
+
+                    // Legacy locations
+                    var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                    var legacyJsonPath = Path.Combine(baseDir, "json", "AppSettings.json");
+                    var legacyFlatPath = Path.Combine(baseDir, "appsettings.json");
+
+                    // If new file doesn't exist yet, migrate from legacy if available
+                    if (!File.Exists(targetPath))
+                    {
+                        if (File.Exists(legacyJsonPath))
+                        {
+                            Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+                            File.Copy(legacyJsonPath, targetPath, overwrite: true);
+                        }
+                        else if (File.Exists(legacyFlatPath))
+                        {
+                            Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+                            File.Copy(legacyFlatPath, targetPath, overwrite: true);
+                        }
+                    }
+                }
+                catch
+                {
+                    // ignore migration failures; file will be created on first save
+                }
+            }
+
+            _configPath = configPath ?? targetPath;
         }
 
         public ConfigSetting LoadSettings()

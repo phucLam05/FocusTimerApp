@@ -49,6 +49,8 @@ namespace GroupThree.FocusTimerApp.Services
             {
                 if (!_registeredApps.Any(a => NormalizePath(a.ExecutablePath) == NormalizePath(app.ExecutablePath)))
                 {
+                    // Mark as registered before persisting
+                    app.IsRegistered = true;
                     _registeredApps.Add(app);
                     PersistToSettings();
                 }
@@ -154,8 +156,13 @@ namespace GroupThree.FocusTimerApp.Services
                 lock (_lock)
                 {
                     _registeredApps.Clear();
-                    _registeredApps.AddRange(apps);
+                    // Chỉ nạp những app có IsRegistered = true
+                    foreach (var a in apps.Where(x => x.IsRegistered))
+                    {
+                        _registeredApps.Add(a);
+                    }
                 }
+                // Không ghi đè trạng thái trong file cấu hình ở đây; tôn trọng IsRegistered hiện có.
             }
             catch (Exception ex)
             {
