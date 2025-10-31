@@ -1,18 +1,22 @@
-﻿using System;
-using System.Windows;
-using GroupThree.FocusTimerApp.Views;
-using GroupThree.FocusTimerApp.Services;
-using Microsoft.Extensions.DependencyInjection;
+﻿using GroupThree.FocusTimerApp.Services;
 using GroupThree.FocusTimerApp.ViewModels;
+using GroupThree.FocusTimerApp.Views;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Globalization;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Forms; // NotifyIcon
 
 namespace GroupThree.FocusTimerApp
 {
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
         private IServiceProvider? _serviceProvider;
         public static IServiceProvider? ServiceProvider { get; private set; }
 
         public HotkeyService? HotkeyServiceInstance { get; private set; }
+        public static bool IsExiting { get; set; }
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -20,46 +24,71 @@ namespace GroupThree.FocusTimerApp
 
             var services = new ServiceCollection();
             ConfigureServices(services);
-            _service_provider_builder(services);
+            _serviceProvider = services.BuildServiceProvider();
+            ServiceProvider = _serviceProvider;
 
-            // resolve MainWindow from DI
+            var settingsService = _serviceProvider!.GetRequiredService<SettingsService>();
+            var startupService = _serviceProvider!.GetRequiredService<StartupService>();
+            var cfg = settingsService.LoadSettings();
+
+            // Apply Start with Windows
+            startupService.ApplyStartupSetting(cfg.General?.StartWithWindows ?? false);
+
+            // resolve MainWindow from DI and show
             var main = _serviceProvider!.GetRequiredService<MainWindow>();
             main.Show();
 
-            // after MainWindow is shown, create HotkeyService and register in DI-backed property
+            // after MainWindow stage, init HotkeyService
             try
             {
-                var settings = _serviceProvider!.GetRequiredService<SettingsService>();
                 var mainVm = (main.DataContext as MainViewModel);
                 if (mainVm != null)
                 {
-                    var hk = new HotkeyService(main, settings);
+                    var hk = new HotkeyService(main, settingsService);
                     hk.HotkeyPressed += action => mainVm.HandleHotkeyAction(action);
                     hk.RegisterHotkeys();
-
                     HotkeyServiceInstance = hk;
                 }
+
+                // Ensure services are created
+                _ = _serviceProvider!.GetRequiredService<AppFocusService>();
+                _ = _serviceProvider!.GetRequiredService<TimerService>();
+                _ = _serviceProvider!.GetRequiredService<FocusZoneCoordinator>(); // subscribe once via DI
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Hotkey init error: {ex.Message}");
+                Console.WriteLine($"Startup init error: {ex.Message}");
             }
-        }
-
-        private void _service_provider_builder(ServiceCollection services)
-        {
-            _serviceProvider = services.BuildServiceProvider();
-            ServiceProvider = _serviceProvider;
         }
 
         private void ConfigureServices(ServiceCollection services)
         {
             // services and singletons
             services.AddSingleton<SettingsService>();
-            services.AddSingleton<TimerService>();
+            services.AddSingleton<StartupService>();
+            services.AddSingleton<TimerService>(sp =>
+            {
+                var timer = new TimerService();
+                var settings = sp.GetRequiredService<SettingsService>();
+                ApplySettingsToTimer(timer, settings.LoadSettings());
+                settings.SettingsChanged += cfg => ApplySettingsToTimer(timer, cfg);
+                return timer;
+            });
+            // App focus service uses SettingsService-backed persistence
+            services.AddSingleton<AppFocusService>(sp =>
+            {
+                var settings = sp.GetRequiredService<SettingsService>();
+                return new AppFocusService(settings);
+            });
+            // Coordinator to centralize notifications + timer control
+            services.AddSingleton<FocusZoneCoordinator>();
 
-            // WindowService needs service provider
             services.AddSingleton<WindowService>(sp => new WindowService(sp));
+
+            // Media library service
+            services.AddSingleton<IMp3LibraryService, Mp3LibraryService>();
+            services.AddSingleton<IPlaylistStorageService, PlaylistStorageService>();
+            services.AddSingleton<IMediaPlaybackService, MediaPlaybackService>();
 
             // Register OverlayViewModel and OverlayService factory
             services.AddTransient<OverlayViewModel>();
@@ -71,7 +100,11 @@ namespace GroupThree.FocusTimerApp
                 var timer = sp.GetRequiredService<TimerService>();
                 var windowSvc = sp.GetRequiredService<WindowService>();
                 var overlay = sp.GetRequiredService<IOverlayService>();
-                return new MainViewModel(timer, windowSvc, overlay);
+                var settings = sp.GetRequiredService<SettingsService>();
+                var library = sp.GetRequiredService<IMp3LibraryService>();
+                var playlist = sp.GetRequiredService<IPlaylistStorageService>();
+                var playback = sp.GetRequiredService<IMediaPlaybackService>();
+                return new MainViewModel(timer, windowSvc, overlay, settings, library, playlist, playback);
             });
 
             // windows
@@ -90,10 +123,13 @@ namespace GroupThree.FocusTimerApp
             services.AddTransient<SettingsWindow>(sp =>
             {
                 var settings = sp.GetRequiredService<SettingsService>();
-                var hotkey = (Application.Current as App)?.HotkeyServiceInstance;
-                var vm = new SettingsViewModel(settings, hotkey);
+                var hotkey = (System.Windows.Application.Current as App)?.HotkeyServiceInstance;
+                var focusService = sp.GetRequiredService<AppFocusService>();
+                var timerService = sp.GetRequiredService<TimerService>();
+
+                var settingsVM = new SettingsViewModel(settings, hotkey, focusService, timerService);
                 var win = new SettingsWindow();
-                win.DataContext = vm;
+                win.DataContext = settingsVM;
                 return win;
             });
 
@@ -104,6 +140,40 @@ namespace GroupThree.FocusTimerApp
                 win.DataContext = vm;
                 return win;
             });
+        }
+
+        private static void ApplySettingsToTimer(TimerService timer, GroupThree.FocusTimerApp.Models.ConfigSetting cfg)
+        {
+            if (cfg == null) return;
+            try
+            {
+                // Map minutes from settings to timer engine
+                var t = cfg.TimerSettings;
+                if (t != null)
+                {
+                    timer.WorkDuration = TimeSpan.FromMinutes(Math.Max(0, t.WorkDuration));
+                    timer.ShortBreak = TimeSpan.FromMinutes(Math.Max(0, t.BreakDuration));
+                    timer.LongBreak = TimeSpan.FromMinutes(Math.Max(0, t.LongBreakDuration));
+                    timer.ShortBreakAfter = TimeSpan.FromMinutes(Math.Max(0, t.WorkDuration)); // not used directly in new flow
+                    timer.LongBreakAfterShortBreakCount = Math.Max(1, t.LongBreakEvery);
+                    timer.ReminderInterval = TimeSpan.FromMinutes(Math.Max(0, t.TrackingInterval));
+                }
+
+                // Notification master switch
+                timer.NotificationsEnabled = cfg.Notification?.EnableNotifications ?? true;
+
+                // Apply StartWithWindows on change
+                try
+                {
+                    var startup = ServiceProvider?.GetService(typeof(StartupService)) as StartupService;
+                    startup?.ApplyStartupSetting(cfg.General?.StartWithWindows ?? false);
+                }
+                catch { }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ApplySettingsToTimer error: {ex.Message}");
+            }
         }
     }
 }

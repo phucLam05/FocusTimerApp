@@ -4,6 +4,12 @@
              xmlns:conv="clr-namespace:GroupThree.FocusTimerApp.Converters">
     <UserControl.Resources>
         <conv:BooleanToStatusConverter x:Key="BooleanToStatusConverter" />
+        <Style x:Key="HotkeyTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Tag" Value="" />
+            <EventSetter Event="GotFocus" Handler="HotkeyTextBox_GotFocus" />
+            <EventSetter Event="LostFocus" Handler="HotkeyTextBox_LostFocus" />
+            <EventSetter Event="PreviewKeyDown" Handler="HotkeyTextBox_PreviewKeyDown" />
+        </Style>
     </UserControl.Resources>
 
     <StackPanel Margin="10">
@@ -15,8 +21,9 @@
                     <DataTemplate>
                         <DockPanel Margin="0,6" LastChildFill="False">
                             <TextBlock Text="{Binding ActionName}" Width="200" VerticalAlignment="Center" />
-                            <TextBox Text="{Binding HotkeyString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     Width="150" Height="24" Margin="6,0" DockPanel.Dock="Right" />
+                            <TextBox Style="{StaticResource HotkeyTextBoxStyle}"
+                                     Text="{Binding HotkeyString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="200" Height="24" Margin="6,0" DockPanel.Dock="Right" />
                             <TextBlock Text="{Binding IsRegistered, Converter={StaticResource BooleanToStatusConverter}}"
                                        Width="100" VerticalAlignment="Center" Margin="6,0" DockPanel.Dock="Right" />
                         </DockPanel>

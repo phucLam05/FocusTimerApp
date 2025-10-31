@@ -11,5 +11,6 @@
             <TextBlock Text="Enable sound" VerticalAlignment="Center" Width="150" />
             <CheckBox IsChecked="{Binding EnableSound}" />
         </StackPanel>
+        <Button Content="Save" Command="{Binding SaveCommand}" Width="80" Margin="0,10,0,0" />
     </StackPanel>
 </UserControl>

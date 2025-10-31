@@ -25,7 +25,7 @@ namespace GroupThree.FocusTimerApp.Services
                 var win = new OverlayWindow();
                 win.DataContext = vm;
                 _overlay = win;
-                _overlay.Owner = Application.Current?.MainWindow;
+                _overlay.Owner = System.Windows.Application.Current?.MainWindow;
                 _overlay.Show();
             }
             else

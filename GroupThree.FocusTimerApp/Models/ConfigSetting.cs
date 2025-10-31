@@ -22,38 +22,44 @@ namespace GroupThree.FocusTimerApp.Models
             new HotkeyBinding
             {
                 ActionName = "Start",
-                Key = "",
-                Modifiers = "",
+                Key = "S",
+                Modifiers = "Ctrl+Alt",
                 Description = "Start timer"
             },
             new HotkeyBinding
             {
                 ActionName = "Pause",
-                Key = "",
-                Modifiers = "",
+                Key = "K",
+                Modifiers = "Ctrl+Alt",
                 Description = "Pause timer"
             },
             new HotkeyBinding
             {
                 ActionName = "Stop",
-                Key = "",
-                Modifiers = "",
+                Key = "X",
+                Modifiers = "Ctrl+Alt",
                 Description = "Stop timer"
             }
         };
         public GeneralSettings General { get; set; } = new();
         public NotificationSettings Notification { get; set; } = new();
+        // Danh sách ứng dụng vùng tập trung (được lưu chung file config và xuất/import cùng Settings)
+        public List<RegisteredAppModel> FocusApps { get; set; } = new();
     }
 
     public class TimerSettings
     {
-        // Mode can be "Pomodoro" or "Tracking"
+        // Mode can be "Pomodoro" or "Basic"
         public string Mode { get; set; } = "Pomodoro";
         // Work duration in minutes (for Pomodoro work)
         public int WorkDuration { get; set; } = 50;
         // Break duration in minutes (short break)
         public int BreakDuration { get; set; } = 10;
-        // Interval in minutes for tracking notifications
+        // Long break duration in minutes
+        public int LongBreakDuration { get; set; } = 30;
+        // Take a long break after this many short breaks
+        public int LongBreakEvery { get; set; } = 4;
+        // Interval in minutes for tracking/basic notifications
         public int TrackingInterval { get; set; } = 15;
         // Whether to enable notifications for timer events
         public bool EnableNotifications { get; set; } = true;
