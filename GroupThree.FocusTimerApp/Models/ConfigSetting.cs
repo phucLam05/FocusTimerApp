@@ -43,6 +43,8 @@ namespace GroupThree.FocusTimerApp.Models
         };
         public GeneralSettings General { get; set; } = new();
         public NotificationSettings Notification { get; set; } = new();
+        // Danh sách ứng dụng vùng tập trung (được lưu chung file config và xuất/import cùng Settings)
+        public List<RegisteredAppModel> FocusApps { get; set; } = new();
     }
 
     public class TimerSettings

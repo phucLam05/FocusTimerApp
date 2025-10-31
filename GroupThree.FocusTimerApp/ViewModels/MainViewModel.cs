@@ -2,6 +2,9 @@ using System;
 using System.Windows.Input;
 using GroupThree.FocusTimerApp.Commands;
 using GroupThree.FocusTimerApp.Services;
+using System.Collections.ObjectModel;
+using GroupThree.FocusTimerApp.Models;
+using System.IO;
 
 namespace GroupThree.FocusTimerApp.ViewModels
 {
@@ -12,6 +15,9 @@ namespace GroupThree.FocusTimerApp.ViewModels
         private readonly IOverlayService _overlay_service;
         private readonly SettingsService _settingsService;
         private readonly System.Windows.Forms.NotifyIcon _notifyIcon;
+        private readonly IMp3LibraryService? _mp3Library;
+        private readonly IPlaylistStorageService? _playlistStorage;
+        private readonly IMediaPlaybackService? _mediaPlayback;
 
         private string _timeText = "00:00:00";
         public string TimeText
@@ -61,16 +67,45 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public bool CanPauseResume
         {
             get => _canPauseResume;
-            private set => SetProperty(ref _canPauseResume, value);
+            private set
+            {
+                if (SetProperty(ref _canPauseResume, value))
+                {
+                    (RemoveSelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+                    (PlaySelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+                    (StopPlaybackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+                }
+            }
         }
+
+        public ObservableCollection<Mp3Track> Tracks { get; } = new();
 
         public ICommand StartCommand { get; }
         public ICommand PauseCommand { get; }
         public ICommand StopCommand { get; }
         public ICommand OpenSettingsCommand { get; }
         public ICommand ToggleOverlayCommand { get; }
+        public ICommand AddTrackCommand { get; }
+        public ICommand RemoveSelectedTrackCommand { get; }
+        public ICommand PlaySelectedTrackCommand { get; }
+        public ICommand StopPlaybackCommand { get; }
 
-        public MainViewModel(ITimerService timerService, IWindowService windowService, IOverlayService overlayService, SettingsService settingsService)
+        private Mp3Track? _selectedTrack;
+        public Mp3Track? SelectedTrack
+        {
+            get => _selectedTrack;
+            set
+            {
+                if (SetProperty(ref _selectedTrack, value))
+                {
+                    (RemoveSelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+                    (PlaySelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+                    (StopPlaybackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public MainViewModel(ITimerService timerService, IWindowService windowService, IOverlayService overlayService, SettingsService settingsService, IMp3LibraryService? mp3Library = null, IPlaylistStorageService? playlistStorage = null, IMediaPlaybackService? mediaPlayback = null)
         {
             _timerService = timerService ?? throw new ArgumentNullException(nameof(timerService));
             _window_service_or_default(windowService);
@@ -78,6 +113,9 @@ namespace GroupThree.FocusTimerApp.ViewModels
             _overlay_service_or_default(overlayService);
             _overlay_service = overlayService ?? throw new ArgumentNullException(nameof(overlayService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+            _mp3Library = mp3Library; // optional DI
+            _playlistStorage = playlistStorage; // optional DI
+            _mediaPlayback = mediaPlayback; // optional DI
 
             // setup tray icon for notifications (use fully-qualified types to avoid ambiguous using)
             _notifyIcon = new System.Windows.Forms.NotifyIcon()
@@ -94,6 +132,10 @@ namespace GroupThree.FocusTimerApp.ViewModels
             StopCommand = new RelayCommand<object>(_ => Stop());
             OpenSettingsCommand = new RelayCommand<object>(_ => _windowService.ShowSettingsWindow());
             ToggleOverlayCommand = new RelayCommand<object>(_ => _overlay_service.ToggleOverlay());
+            AddTrackCommand = new RelayCommand<object>(_ => AddTrack());
+            RemoveSelectedTrackCommand = new RelayCommand<object>(_ => RemoveSelectedTrack(), _ => SelectedTrack != null);
+            PlaySelectedTrackCommand = new RelayCommand<object>(_ => PlaySelectedTrack(), _ => SelectedTrack != null);
+            StopPlaybackCommand = new RelayCommand<object>(_ => StopPlayback(), _ => _mediaPlayback?.IsPlaying == true);
 
             _timerService.Tick += OnTick;
             _timerService.Finished += OnFinished;
@@ -109,6 +151,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
             catch { }
 
             ResetState();
+            LoadPlaylistOrDefault();
         }
 
         private void ConfigureTrayIcon()
@@ -293,6 +336,108 @@ namespace GroupThree.FocusTimerApp.ViewModels
             Progress = 0;
             IsTimerRunning = _timerService.IsRunning;
             CanPauseResume = false; // no active session after reset
+        }
+
+        private void LoadPlaylistOrDefault()
+        {
+            Tracks.Clear();
+
+            bool loadedFromPlaylist = false;
+            if (_playlistStorage != null)
+            {
+                try
+                {
+                    var saved = _playlistStorage.Load();
+                    foreach (var t in saved)
+                        Tracks.Add(t);
+                    loadedFromPlaylist = saved.Count > 0;
+                }
+                catch { }
+            }
+
+            if (!loadedFromPlaylist && _mp3Library != null)
+            {
+                try
+                {
+                    var music = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+                    if (!string.IsNullOrWhiteSpace(music))
+                    {
+                        foreach (var t in _mp3Library.LoadFromFolder(music))
+                            Tracks.Add(t);
+                      }
+                }
+                catch { }
+            }
+        }
+
+        private void SavePlaylist()
+        {
+            if (_playlistStorage == null) return;
+            try
+            {
+                _playlistStorage.Save(Tracks);
+            }
+            catch { }
+        }
+
+        private void AddTrack()
+        {
+            if (_mp3Library == null) return;
+            try
+            {
+                var dlg = new Microsoft.Win32.OpenFileDialog
+                {
+                    Filter = "Audio Files|*.mp3;*.m4a;*.flac;*.ogg;*.wav;*.wma|All Files|*.*",
+                    Multiselect = true
+                };
+                var ok = dlg.ShowDialog() ?? false;
+                if (!ok) return;
+
+                foreach (var f in dlg.FileNames)
+                {
+                    if (_mp3Library.TryReadFile(f, out var track) && track != null)
+                    {
+                        // do not copy; keep original file path and show title via TagLib
+                        Tracks.Add(track);
+                    }
+                }
+                SavePlaylist();
+            }
+            catch { }
+        }
+
+        private void RemoveSelectedTrack()
+        {
+            if (SelectedTrack == null) return;
+            try
+            {
+                Tracks.Remove(SelectedTrack);
+                SelectedTrack = null;
+                SavePlaylist();
+            }
+            catch { }
+        }
+
+        private void PlaySelectedTrack()
+        {
+            if (SelectedTrack == null || _mediaPlayback == null) return;
+            try
+            {
+                _mediaPlayback.Play(SelectedTrack.FilePath);
+                (StopPlaybackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+            }
+            catch { }
+        }
+
+        private void StopPlayback()
+        {
+            if (_mediaPlayback == null) return;
+            try
+            {
+                _mediaPlayback.Stop();
+                (StopPlaybackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+            }
+            catch { }
         }
     }
 }

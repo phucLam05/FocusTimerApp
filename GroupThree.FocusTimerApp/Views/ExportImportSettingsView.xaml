@@ -1,0 +1,36 @@
+<UserControl x:Class="GroupThree.FocusTimerApp.Views.ExportImportSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="10" >
+            <TextBlock Text="Export/Import settings code" FontWeight="Bold" FontSize="14" />
+            <TextBlock Margin="0,8,0,4" Text="Export code (copy to share):" />
+            <DockPanel>
+                <Button Content="Regenerate" Width="100" Margin="0,0,8,0" Command="{Binding GenerateExportCodeCommand}" />
+                <Button Content="Copy" Width="80" Command="{Binding CopyExportCodeCommand}" ToolTip="Copy code" />
+            </DockPanel>
+            <TextBox Margin="0,4,0,8"
+                     TextWrapping="NoWrap"
+                     AcceptsReturn="False"
+                     Height="28"
+                     IsReadOnly="True"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                     Text="{Binding ExportCode, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <Separator Margin="0,10" />
+
+            <TextBlock Margin="0,8,0,4" Text="Paste code to import:" />
+            <TextBox Margin="0,4,0,4"
+                     TextWrapping="NoWrap"
+                     AcceptsReturn="False"
+                     Height="28"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                     Text="{Binding ImportCode, UpdateSourceTrigger=PropertyChanged}"/>
+            <Button Content="Import settings" Width="140" Command="{Binding ImportFromCodeCommand}" />
+
+            <TextBlock Margin="0,10,0,0" Foreground="DarkSlateBlue" Text="{Binding StatusMessage}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

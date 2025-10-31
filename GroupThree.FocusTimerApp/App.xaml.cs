@@ -1,9 +1,12 @@
-﻿using System;
-using System.Windows;
-using GroupThree.FocusTimerApp.Views;
-using GroupThree.FocusTimerApp.Services;
-using Microsoft.Extensions.DependencyInjection;
+﻿using GroupThree.FocusTimerApp.Services;
 using GroupThree.FocusTimerApp.ViewModels;
+using GroupThree.FocusTimerApp.Views;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Globalization;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Forms; // NotifyIcon
 
 namespace GroupThree.FocusTimerApp
 {
@@ -21,7 +24,8 @@ namespace GroupThree.FocusTimerApp
 
             var services = new ServiceCollection();
             ConfigureServices(services);
-            _service_provider_builder(services);
+            _serviceProvider = services.BuildServiceProvider();
+            ServiceProvider = _serviceProvider;
 
             var settingsService = _serviceProvider!.GetRequiredService<SettingsService>();
             var startupService = _serviceProvider!.GetRequiredService<StartupService>();
@@ -45,17 +49,16 @@ namespace GroupThree.FocusTimerApp
                     hk.RegisterHotkeys();
                     HotkeyServiceInstance = hk;
                 }
+
+                // Ensure services are created
+                _ = _serviceProvider!.GetRequiredService<AppFocusService>();
+                _ = _serviceProvider!.GetRequiredService<TimerService>();
+                _ = _serviceProvider!.GetRequiredService<FocusZoneCoordinator>(); // subscribe once via DI
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Hotkey init error: {ex.Message}");
+                Console.WriteLine($"Startup init error: {ex.Message}");
             }
-        }
-
-        private void _service_provider_builder(ServiceCollection services)
-        {
-            _serviceProvider = services.BuildServiceProvider();
-            ServiceProvider = _serviceProvider;
         }
 
         private void ConfigureServices(ServiceCollection services)
@@ -71,9 +74,21 @@ namespace GroupThree.FocusTimerApp
                 settings.SettingsChanged += cfg => ApplySettingsToTimer(timer, cfg);
                 return timer;
             });
+            // App focus service uses SettingsService-backed persistence
+            services.AddSingleton<AppFocusService>(sp =>
+            {
+                var settings = sp.GetRequiredService<SettingsService>();
+                return new AppFocusService(settings);
+            });
+            // Coordinator to centralize notifications + timer control
+            services.AddSingleton<FocusZoneCoordinator>();
 
-            // WindowService needs service provider
             services.AddSingleton<WindowService>(sp => new WindowService(sp));
+
+            // Media library service
+            services.AddSingleton<IMp3LibraryService, Mp3LibraryService>();
+            services.AddSingleton<IPlaylistStorageService, PlaylistStorageService>();
+            services.AddSingleton<IMediaPlaybackService, MediaPlaybackService>();
 
             // Register OverlayViewModel and OverlayService factory
             services.AddTransient<OverlayViewModel>();
@@ -86,7 +101,10 @@ namespace GroupThree.FocusTimerApp
                 var windowSvc = sp.GetRequiredService<WindowService>();
                 var overlay = sp.GetRequiredService<IOverlayService>();
                 var settings = sp.GetRequiredService<SettingsService>();
-                return new MainViewModel(timer, windowSvc, overlay, settings);
+                var library = sp.GetRequiredService<IMp3LibraryService>();
+                var playlist = sp.GetRequiredService<IPlaylistStorageService>();
+                var playback = sp.GetRequiredService<IMediaPlaybackService>();
+                return new MainViewModel(timer, windowSvc, overlay, settings, library, playlist, playback);
             });
 
             // windows
@@ -106,9 +124,12 @@ namespace GroupThree.FocusTimerApp
             {
                 var settings = sp.GetRequiredService<SettingsService>();
                 var hotkey = (System.Windows.Application.Current as App)?.HotkeyServiceInstance;
-                var vm = new SettingsViewModel(settings, hotkey);
+                var focusService = sp.GetRequiredService<AppFocusService>();
+                var timerService = sp.GetRequiredService<TimerService>();
+
+                var settingsVM = new SettingsViewModel(settings, hotkey, focusService, timerService);
                 var win = new SettingsWindow();
-                win.DataContext = vm;
+                win.DataContext = settingsVM;
                 return win;
             });
 
