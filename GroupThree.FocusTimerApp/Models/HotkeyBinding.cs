@@ -16,7 +16,6 @@ namespace GroupThree.FocusTimerApp.Models
         private string _key = string.Empty;
         private string _modifiers = string.Empty;
         private string _description = string.Empty;
-        private bool _isRegistered = false;
 
         public string ActionName
         {
@@ -30,7 +29,11 @@ namespace GroupThree.FocusTimerApp.Models
             set
             {
                 if (SetField(ref _key, value))
+                {
                     OnPropertyChanged(nameof(ParsedKey));
+                    OnPropertyChanged(nameof(IsRegistered));
+                    OnPropertyChanged(nameof(HotkeyString));
+                }
             }
         }
 
@@ -40,7 +43,11 @@ namespace GroupThree.FocusTimerApp.Models
             set
             {
                 if (SetField(ref _modifiers, value))
+                {
                     OnPropertyChanged(nameof(ParsedModifiers));
+                    OnPropertyChanged(nameof(IsRegistered));
+                    OnPropertyChanged(nameof(HotkeyString));
+                }
             }
         }
 
@@ -95,8 +102,7 @@ namespace GroupThree.FocusTimerApp.Models
         [JsonIgnore]
         public bool IsRegistered
         {
-            get => _isRegistered;
-            set => SetField(ref _isRegistered, value);
+            get => !string.IsNullOrWhiteSpace(_key) && ParsedKey != KeyEnum.None;
         }
 
         // Chuỗi hiển thị đầy đủ dạng "Ctrl+Alt+S"

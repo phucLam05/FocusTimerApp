@@ -1,16 +1,17 @@
-﻿    using System;
+﻿using System;
 
-    namespace GroupThree.FocusTimerApp.Models
+namespace GroupThree.FocusTimerApp.Models
+{
+    public class RegisteredAppModel
     {
-        public class RegisteredAppModel
-        {
-            // 🧱 Thông tin cơ bản của ứng dụng
-            public string AppName { get; set; } = string.Empty;         // Tên process (vd: Chrome, Word)
-            public string ExecutablePath { get; set; } = string.Empty;  // Đường dẫn .exe
-            public DateTime LastActive { get; set; }                    // Lần cuối được focus
-            public bool IsRunning { get; set; }                         // Có đang chạy không
+        // 🧱 Thông tin cơ bản của ứng dụng
+        public string AppName { get; set; } = string.Empty;         // Tên process (vd: Chrome, Word)
+        public string ProcessName { get; set; } = string.Empty;       // Process name for matching
+        public string ExecutablePath { get; set; } = string.Empty;  // Đường dẫn .exe
+        public DateTime LastActive { get; set; }                    // Lần cuối được focus
+        public bool IsRunning { get; set; }                         // Có đang chạy không
 
-            // 🧠 (Tuỳ chọn) Nếu bạn có cờ khác, thêm ở đây
-            public bool IsRegistered { get; set; }
-        }
+        // 🧠 (Tuỳ chọn) Nếu bạn có cờ khác, thêm ở đây
+        public bool IsRegistered { get; set; }
     }
+}

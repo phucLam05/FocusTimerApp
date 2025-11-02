@@ -74,6 +74,7 @@ namespace GroupThree.FocusTimerApp.Models
     {
         public bool StartWithWindows { get; set; } = false;
         public bool RunInBackground { get; set; } = true;
+        public bool IsDarkMode { get; set; } = true;
     }
 
     public class NotificationSettings

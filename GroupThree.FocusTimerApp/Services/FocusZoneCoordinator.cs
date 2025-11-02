@@ -34,7 +34,7 @@ namespace GroupThree.FocusTimerApp.Services
                     Icon = System.Drawing.SystemIcons.Information,
                     Visible = true,
                     BalloonTipTitle = "Focus Timer",
-                    BalloonTipText = "Chào m?ng quay l?i vùng làm vi?c!"
+                    BalloonTipText = "Welcome back to work zone!"
                 };
                 notify.ShowBalloonTip(3000);
 
@@ -62,7 +62,7 @@ namespace GroupThree.FocusTimerApp.Services
                     Icon = System.Drawing.SystemIcons.Warning,
                     Visible = true,
                     BalloonTipTitle = "Focus Timer",
-                    BalloonTipText = "B?n ?ã r?i kh?i vùng làm vi?c!"
+                    BalloonTipText = "You have left the work zone!"
                 };
                 notify.ShowBalloonTip(3000);
 

@@ -49,6 +49,19 @@ namespace GroupThree.FocusTimerApp.Services
             {
                 if (!_registeredApps.Any(a => NormalizePath(a.ExecutablePath) == NormalizePath(app.ExecutablePath)))
                 {
+                    // Ensure ProcessName is set
+                    if (string.IsNullOrEmpty(app.ProcessName) && !string.IsNullOrEmpty(app.ExecutablePath))
+                    {
+                        try
+                        {
+                            app.ProcessName = System.IO.Path.GetFileNameWithoutExtension(app.ExecutablePath);
+                        }
+                        catch
+                        {
+                            app.ProcessName = app.AppName;
+                        }
+                    }
+
                     // Mark as registered before persisting
                     app.IsRegistered = true;
                     _registeredApps.Add(app);

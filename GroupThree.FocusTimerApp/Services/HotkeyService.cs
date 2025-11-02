@@ -60,9 +60,6 @@ namespace GroupThree.FocusTimerApp.Services
                 return;
             }
 
-            // Clear previous registration flags in model
-            foreach (var h in hotkeys) h.IsRegistered = false;
-
             foreach (var binding in hotkeys)
             {
                 try
@@ -73,8 +70,7 @@ namespace GroupThree.FocusTimerApp.Services
                     if (binding.ParsedModifiers.HasFlag(ModifierKeys.Shift)) modifiers |= HotKeyHelpers.MOD_SHIFT;
                     if (binding.ParsedModifiers.HasFlag(ModifierKeys.Windows)) modifiers |= HotKeyHelpers.MOD_WIN;
 
-                    bool success = RegisterHotkey(binding, modifiers, binding.ParsedKey, out int id);
-                    binding.IsRegistered = success;
+                    RegisterHotkey(binding, modifiers, binding.ParsedKey, out int id);
                 }
                 catch (Exception ex)
                 {
@@ -153,13 +149,6 @@ namespace GroupThree.FocusTimerApp.Services
             }
 
             _registeredHotkeys.Clear();
-
-            // Clear registration flags in model
-            var hotkeys = _settingsService.LoadHotkeys();
-            if (hotkeys != null)
-            {
-                foreach (var h in hotkeys) h.IsRegistered = false;
-            }
 
             Console.WriteLine("All hotkeys unregistered.");
         }

@@ -1,51 +1,223 @@
 <Window x:Class="GroupThree.FocusTimerApp.Views.SettingsWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="clr-namespace:GroupThree.FocusTimerApp.ViewModels"
-        xmlns:views="clr-namespace:GroupThree.FocusTimerApp.Views"
-        xmlns:conv="clr-namespace:GroupThree.FocusTimerApp.Converters"
-        Title="Settings" Height="400" Width="600">
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:GroupThree.FocusTimerApp.ViewModels"
+    xmlns:views="clr-namespace:GroupThree.FocusTimerApp.Views"
+    xmlns:conv="clr-namespace:GroupThree.FocusTimerApp.Converters"
+    Title="Settings" 
+    Height="600" 
+    Width="750"
+    WindowStartupLocation="CenterScreen"
+    Background="Transparent"
+    WindowStyle="None"
+    AllowsTransparency="True"
+    ResizeMode="NoResize">
+ 
     <Window.Resources>
         <conv:BooleanToStatusConverter x:Key="BooleanToStatusConverter" />
-        <!-- Map viewmodels to views using the actual UserControl views -->
-        <DataTemplate DataType="{x:Type vm:GeneralSettingsViewModel}">
-            <views:GeneralSettingsView />
+        
+  <DataTemplate DataType="{x:Type vm:GeneralSettingsViewModel}">
+      <views:GeneralSettingsView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:NotificationSettingsViewModel}">
-            <views:NotificationSettingsView />
-        </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:NotificationSettingsViewModel}">
+    <views:NotificationSettingsView />
+   </DataTemplate>
         <DataTemplate DataType="{x:Type vm:TimerSettingsViewModel}">
             <views:TimerSettingsView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:HotkeySettingsViewModel}">
+      </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:HotkeySettingsViewModel}">
             <views:HotkeySettingsView />
-        </DataTemplate>
+      </DataTemplate>
         <DataTemplate DataType="{x:Type vm:AppControlViewModel}">
             <views:AppControlView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:ExportImportSettingsViewModel}">
             <views:ExportImportSettingsView />
         </DataTemplate>
+
+        <Style x:Key="SettingsMenuButton" TargetType="Button">
+         <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+<Setter Property="BorderThickness" Value="0" />
+          <Setter Property="Padding" Value="15,10" />
+     <Setter Property="FontSize" Value="13" />
+       <Setter Property="FontWeight" Value="Medium" />
+       <Setter Property="HorizontalContentAlignment" Value="Left" />
+     <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+       <Setter.Value>
+ <ControlTemplate TargetType="Button">
+        <Border x:Name="ButtonBorder"
+  Background="{TemplateBinding Background}" 
+  Padding="{TemplateBinding Padding}"
+    CornerRadius="10">
+   <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+    VerticalAlignment="Center" />
+    </Border>
+  <ControlTemplate.Triggers>
+    <Trigger Property="IsMouseOver" Value="True">
+<Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource SecondaryButtonBrush}" />
+  </Trigger>
+        </ControlTemplate.Triggers>
+   </ControlTemplate>
+ </Setter.Value>
+    </Setter>
+     <Style.Triggers>
+   <Trigger Property="IsMouseOver" Value="True">
+  <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+     </Trigger>
+   </Style.Triggers>
+     </Style>
     </Window.Resources>
 
+    <Border Background="{DynamicResource CardBackgroundBrush}"
+            BorderBrush="{DynamicResource PrimaryButtonBrush}"
+   BorderThickness="1"
+       CornerRadius="16"
+  ClipToBounds="True">
+  
+  <Grid ClipToBounds="True">
+      <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="180" />
+  <ColumnDefinition Width="*" />
+</Grid.ColumnDefinitions>
+
+ <!-- LEFT SIDEBAR -->
+ <Border Grid.Column="0" 
+    Background="{DynamicResource SidebarBackgroundBrush}" 
+    CornerRadius="15,0,0,15"
+     BorderThickness="0"
+       ClipToBounds="True">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="150" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+  <Grid.RowDefinitions>
+  <RowDefinition Height="Auto" />
+<RowDefinition Height="*" />
+          </Grid.RowDefinitions>
 
-        <StackPanel Grid.Column="0" Background="#EEE">
-            <Button Content="General" Margin="5" Command="{Binding ShowGeneralCommand}" />
-            <Button Content="Notification" Margin="5" Command="{Binding ShowNotificationCommand}" />
-            <Button Content="Timer" Margin="5" Command="{Binding ShowTimerCommand}" />
-            <Button Content="Hotkey" Margin="5" Command="{Binding ShowHotkeyCommand}" />
-            <Button Content="Focus Zone Apps" Margin="5" Command="{Binding ShowFocusZoneCommand}" />
-            <Separator Margin="5" />
-            <Button Content="Import/Export code" Margin="5" Command="{Binding ShowExportImportCommand}" />
+   <!-- Sidebar Header -->
+          <Border Grid.Row="0" Background="Transparent" Padding="15,20,15,15">
+          <StackPanel Orientation="Horizontal">
+       <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
+  <Ellipse.Fill>
+           <RadialGradientBrush>
+              <GradientStop Color="#8B5CF6" Offset="0" />
+ <GradientStop Color="#6366F1" Offset="1" />
+           </RadialGradientBrush>
+     </Ellipse.Fill>
+   <Ellipse.Effect>
+   <DropShadowEffect Color="#808B5CF6" BlurRadius="8" ShadowDepth="0" Opacity="0.8" />
+  </Ellipse.Effect>
+  </Ellipse>
+               <TextBlock Text="Settings" FontSize="16" FontWeight="Bold" 
+     Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
         </StackPanel>
+     </Border>
 
-        <Grid Grid.Column="1">
-            <ContentControl x:Name="ContentHost" Content="{Binding CurrentView}" Margin="8" />
-        </Grid>
+         <!-- Menu Items -->
+ <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
+             <StackPanel>
+          <Button Style="{StaticResource SettingsMenuButton}" Command="{Binding ShowGeneralCommand}">
+           <StackPanel Orientation="Horizontal">
+     <Path Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" 
+      Fill="{DynamicResource TextSecondaryBrush}" Width="16" Height="16" 
+         Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+         <TextBlock Text="General" VerticalAlignment="Center" />
+ </StackPanel>
+     </Button>
+           
+              <Button Style="{StaticResource SettingsMenuButton}" Command="{Binding ShowTimerCommand}">
+        <StackPanel Orientation="Horizontal">
+            <Path Data="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" 
+       Fill="{DynamicResource TextSecondaryBrush}" Width="16" Height="16" 
+    Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+         <TextBlock Text="Timer" VerticalAlignment="Center" />
+        </StackPanel>
+  </Button>
+
+           <Button Style="{StaticResource SettingsMenuButton}" Command="{Binding ShowNotificationCommand}">
+      <StackPanel Orientation="Horizontal">
+   <Path Data="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21" 
+          Fill="{DynamicResource TextSecondaryBrush}" Width="16" Height="16" 
+Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+   <TextBlock Text="Notifications" VerticalAlignment="Center" />
+          </StackPanel>
+           </Button>
+
+     <Button Style="{StaticResource SettingsMenuButton}" Command="{Binding ShowHotkeyCommand}">
+  <StackPanel Orientation="Horizontal">
+             <Path Data="M19,10H17V8H19M19,13H17V11H19M16,10H14V8H16M16,13H14V11H16M16,17H8V15H16M7,10H5V8H7M7,13H5V11H7M8,11H10V13H8M8,8H10V10H8M11,11H13V13H11M11,8H13V10H11M20,5H4C2.89,5 2,5.89 2,7V17A2,2 0 0,0 4,19H20A2,2 0 0,0 22,17V7C22,5.89 21.1,5 20,5Z" 
+            Fill="{DynamicResource TextSecondaryBrush}" Width="16" Height="16" 
+               Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+         <TextBlock Text="Hotkeys" VerticalAlignment="Center" />
+    </StackPanel>
+         </Button>
+     
+                <Button Style="{StaticResource SettingsMenuButton}" Command="{Binding ShowFocusZoneCommand}">
+             <StackPanel Orientation="Horizontal">
+<Path Data="M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M15.6,8.34C16.67,8.34 17.53,9.2 17.53,10.27C17.53,11.34 16.67,12.2 15.6,12.2A1.93,1.93 0 0,1 13.67,10.27C13.67,9.2 14.53,8.34 15.6,8.34M9.6,6.76C10.9,6.76 11.96,7.82 11.96,9.12C11.96,10.42 10.9,11.5 9.6,11.5C8.3,11.5 7.24,10.42 7.24,9.12C7.24,7.81 8.29,6.76 9.6,6.76M9.6,15.89V19.64C7.2,18.89 5.3,17.04 4.46,14.68C5.5,13.56 8.13,13 9.6,13C10.13,13 10.8,13.07 11.5,13.21C9.86,14.08 9.6,15.23 9.6,15.89M12,20C11.72,20 11.46,20 11.2,19.96V15.89C11.2,14.47 14.14,13.76 15.6,13.76C16.67,13.76 18.5,14.15 19.44,14.91C18.27,17.88 15.38,20 12,20Z" 
+         Fill="{DynamicResource TextSecondaryBrush}" Width="16" Height="16" 
+         Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+      <TextBlock Text="Focus Zone Apps" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+     
+   <Separator Margin="10,10,10,10" Background="{DynamicResource BorderBrush}" Height="1"/>
+     
+      <Button Style="{StaticResource SettingsMenuButton}" Command="{Binding ShowExportImportCommand}">
+    <StackPanel Orientation="Horizontal">
+         <Path Data="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12,19L8,15H10.5V12H13.5V15H16L12,19Z" 
+   Fill="{DynamicResource TextSecondaryBrush}" Width="16" Height="16" 
+     Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+         <TextBlock Text="Import/Export" VerticalAlignment="Center" />
+        </StackPanel>
+         </Button>
+        </StackPanel>
+      </ScrollViewer>
+      </Grid>
+            </Border>
+
+        <!-- RIGHT CONTENT AREA -->
+  <Border Grid.Column="1" 
+   Background="{DynamicResource CardBackgroundBrush}"
+        CornerRadius="0,15,15,0"
+    ClipToBounds="True"
+      MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            
+     <Grid>
+  <Button Width="32" Height="32" 
+        Click="CloseButton_Click" 
+                 Background="Transparent" 
+       BorderThickness="0" 
+   Cursor="Hand" 
+         ToolTip="Close" 
+             HorizontalAlignment="Right" 
+           VerticalAlignment="Top" 
+   Margin="0,15,15,0" 
+        Panel.ZIndex="999">
+           <Button.Template>
+  <ControlTemplate TargetType="Button">
+        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+          <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+  </Border>
+   </ControlTemplate>
+             </Button.Template>
+      <Button.Style>
+                 <Style TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+    <Style.Triggers>
+<Trigger Property="IsMouseOver" Value="True">
+              <Setter Property="Background" Value="{DynamicResource CloseButtonHoverBrush}" />
+       </Trigger>
+  </Style.Triggers>
+    </Style>
+         </Button.Style>
+          <Path Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" 
+    Fill="{DynamicResource TextPrimaryBrush}" Width="12" Height="12" Stretch="Uniform" />
+      </Button>
+        
+<ContentControl Content="{Binding CurrentView}" Margin="20,60,20,20" />
+  </Grid>
+      </Border>
     </Grid>
+    </Border>
 </Window>

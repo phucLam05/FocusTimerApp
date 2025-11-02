@@ -23,6 +23,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public int TrackingInterval { get => _trackingInterval; set => SetProperty(ref _trackingInterval, value); }
 
         public ICommand SaveCommand { get; }
+        public ICommand ResetDefaultsCommand { get; }
 
         public TimerSettingsViewModel(Services.SettingsService settingsService)
         {
@@ -37,6 +38,16 @@ namespace GroupThree.FocusTimerApp.ViewModels
             TrackingInterval = cfg.TimerSettings.TrackingInterval;
 
             SaveCommand = new RelayCommand<object>(_ => Save());
+            ResetDefaultsCommand = new RelayCommand<object>(_ => ResetDefaults());
+        }
+
+        private void ResetDefaults()
+        {
+            WorkDuration = 25;
+            ShortBreak = 5;
+            LongBreak = 15;
+            LongBreakEvery = 4;
+            TrackingInterval = 15;
         }
 
         public void Save()
@@ -48,6 +59,22 @@ namespace GroupThree.FocusTimerApp.ViewModels
             cfg.TimerSettings.LongBreakEvery = LongBreakEvery;
             cfg.TimerSettings.TrackingInterval = TrackingInterval;
             _settingsService.SaveSettings(cfg);
+
+            // Show success dialog
+            ShowSuccessDialog("Settings Saved", "Timer settings have been saved successfully!");
+        }
+
+        private void ShowSuccessDialog(string title, string message)
+        {
+            try
+            {
+                var dialog = new Views.SuccessDialog(title, message)
+                {
+                    Owner = System.Windows.Application.Current?.MainWindow
+                };
+                dialog.ShowDialog();
+            }
+            catch { }
         }
 
         private void _settings_service_or_default(Services.SettingsService settingsService)

@@ -29,7 +29,11 @@ namespace GroupThree.FocusTimerApp
 
             var settingsService = _serviceProvider!.GetRequiredService<SettingsService>();
             var startupService = _serviceProvider!.GetRequiredService<StartupService>();
+            var themeService = _serviceProvider!.GetRequiredService<ThemeService>();
             var cfg = settingsService.LoadSettings();
+
+            // Initialize theme BEFORE showing windows
+            themeService.Initialize();
 
             // Apply Start with Windows
             startupService.ApplyStartupSetting(cfg.General?.StartWithWindows ?? false);
@@ -66,6 +70,7 @@ namespace GroupThree.FocusTimerApp
             // services and singletons
             services.AddSingleton<SettingsService>();
             services.AddSingleton<StartupService>();
+            services.AddSingleton<ThemeService>();
             services.AddSingleton<TimerService>(sp =>
             {
                 var timer = new TimerService();
@@ -101,10 +106,11 @@ namespace GroupThree.FocusTimerApp
                 var windowSvc = sp.GetRequiredService<WindowService>();
                 var overlay = sp.GetRequiredService<IOverlayService>();
                 var settings = sp.GetRequiredService<SettingsService>();
+                var themeService = sp.GetRequiredService<ThemeService>();
                 var library = sp.GetRequiredService<IMp3LibraryService>();
                 var playlist = sp.GetRequiredService<IPlaylistStorageService>();
                 var playback = sp.GetRequiredService<IMediaPlaybackService>();
-                return new MainViewModel(timer, windowSvc, overlay, settings, library, playlist, playback);
+                return new MainViewModel(timer, windowSvc, overlay, settings, themeService, library, playlist, playback);
             });
 
             // windows
@@ -123,11 +129,12 @@ namespace GroupThree.FocusTimerApp
             services.AddTransient<SettingsWindow>(sp =>
             {
                 var settings = sp.GetRequiredService<SettingsService>();
+                var themeService = sp.GetRequiredService<ThemeService>();
                 var hotkey = (System.Windows.Application.Current as App)?.HotkeyServiceInstance;
                 var focusService = sp.GetRequiredService<AppFocusService>();
                 var timerService = sp.GetRequiredService<TimerService>();
 
-                var settingsVM = new SettingsViewModel(settings, hotkey, focusService, timerService);
+                var settingsVM = new SettingsViewModel(settings, themeService, hotkey, focusService, timerService);
                 var win = new SettingsWindow();
                 win.DataContext = settingsVM;
                 return win;

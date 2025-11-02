@@ -13,6 +13,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public bool EnableSound { get => _enableSound; set => SetProperty(ref _enableSound, value); }
 
         public System.Windows.Input.ICommand SaveCommand { get; }
+        public System.Windows.Input.ICommand ResetDefaultsCommand { get; }
 
         public NotificationSettingsViewModel(Services.SettingsService settingsService)
         {
@@ -22,6 +23,13 @@ namespace GroupThree.FocusTimerApp.ViewModels
             EnableSound = cfg.Notification?.EnableSound ?? true;
 
             SaveCommand = new Commands.RelayCommand<object>(_ => Save());
+            ResetDefaultsCommand = new Commands.RelayCommand<object>(_ => ResetDefaults());
+        }
+
+        private void ResetDefaults()
+        {
+            EnableNotifications = true;
+            EnableSound = true;
         }
 
         private void Save()
@@ -31,6 +39,22 @@ namespace GroupThree.FocusTimerApp.ViewModels
             cfg.Notification.EnableNotifications = EnableNotifications;
             cfg.Notification.EnableSound = EnableSound;
             _settingsService.SaveSettings(cfg);
+
+            // Show success dialog
+            ShowSuccessDialog("Settings Saved", "Notification settings have been saved successfully!");
+        }
+
+        private void ShowSuccessDialog(string title, string message)
+        {
+            try
+            {
+                var dialog = new Views.SuccessDialog(title, message)
+                {
+                    Owner = System.Windows.Application.Current?.MainWindow
+                };
+                dialog.ShowDialog();
+            }
+            catch { }
         }
 
         private Models.ConfigSetting _settings_service_or_default()
