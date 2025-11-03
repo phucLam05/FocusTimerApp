@@ -172,6 +172,12 @@ namespace GroupThree.FocusTimerApp.ViewModels
             _timerService.Tick += OnTick;
             _timerService.Finished += OnFinished;
             _timerService.NotificationRequested += OnNotificationRequested;
+    
+            // Subscribe to media playback ended event
+            if (_mediaPlayback != null)
+            {
+                _mediaPlayback.PlaybackEnded += OnPlaybackEnded;
+            }
 
             // initialize SelectedMode from settings
             try
@@ -566,9 +572,17 @@ try
    _mediaPlayback.Stop();
      IsPlaying = false;
   (StopPlaybackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
-            (PlaySelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+    (PlaySelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
      }
         catch { }
     }
+
+      private void OnPlaybackEnded(object? sender, EventArgs e)
+        {
+          // Update UI when playback ends
+            IsPlaying = false;
+            (StopPlaybackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+    (PlaySelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+        }
   }
 }
