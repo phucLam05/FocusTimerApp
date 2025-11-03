@@ -24,7 +24,6 @@ namespace GroupThree.FocusTimerApp.Services
     {
         private readonly System.Timers.Timer _timer;
         private DateTime? _startTime;
-        private TimeSpan _elapsedBeforePause = TimeSpan.Zero;
         private TimeSpan _targetDuration = TimeSpan.Zero;
         private bool _isRunning;
         private bool _isInBreak;
@@ -198,24 +197,26 @@ namespace GroupThree.FocusTimerApp.Services
         {
             if (!_isRunning) return;
 
-            // ✅ lưu lại thời gian đã trôi
-            _elapsedBeforePause += (DateTime.UtcNow - _startTime!.Value);
-
             _isRunning = false;
             _timer.Stop();
-            if (_startTime.HasValue)
+      
+    // Accumulate elapsed time for current segment
+     if (_startTime.HasValue)
             {
-                _segmentElapsedOffset += DateTime.UtcNow - _startTime.Value; // accumulate elapsed so far
+ _segmentElapsedOffset += DateTime.UtcNow - _startTime.Value;
             }
-        }
+            
+            _startTime = null;
+  }
 
-        public void Resume()
+      public void Resume()
         {
-            if (_isRunning) return;
-            // resume measuring from now, keeping accumulated offset
-            _startTime = DateTime.UtcNow;
+    if (_isRunning) return;
+ 
+         // Resume from where we paused - _segmentElapsedOffset already has accumulated time
+   _startTime = DateTime.UtcNow;
             _isRunning = true;
-            _timer.Start();
+        _timer.Start();
         }
 
         public void Stop()
@@ -223,7 +224,6 @@ namespace GroupThree.FocusTimerApp.Services
             _isRunning = false;
             _timer.Stop();
             _startTime = null;
-            _elapsedBeforePause = TimeSpan.Zero;
             _targetDuration = TimeSpan.Zero;
             _isInBreak = false;
             _elapsedSeconds = 0;

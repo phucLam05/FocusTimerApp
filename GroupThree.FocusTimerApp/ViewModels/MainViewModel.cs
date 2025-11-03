@@ -349,20 +349,31 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
         public void Start()
         {
-            // ensure tray icon visible when user starts a phase
-            try { _notifyIcon.Visible = true; } catch { }
+// ensure tray icon visible when user starts a phase
+      try { _notifyIcon.Visible = true; } catch { }
 
-            if (string.Equals(SelectedMode, "Pomodoro", StringComparison.OrdinalIgnoreCase))
-            {
-                _timerService.StartPomodoro();
+       // Check if timer is paused - if yes, resume instead of starting fresh
+            if (CanPauseResume && !_timerService.IsRunning)
+         {
+  // Timer was paused, so resume it
+          _timerService.Resume();
             }
-            else
-            {
-                _timerService.StartBasic();
-            }
+  else
+    {
+     // Starting fresh
+          if (string.Equals(SelectedMode, "Pomodoro", StringComparison.OrdinalIgnoreCase))
+      {
+_timerService.StartPomodoro();
+        }
+          else
+  {
+     _timerService.StartBasic();
+        }
+   }
+ 
             IsTimerRunning = _timerService.IsRunning;
             RaisePropertyChanged(nameof(IsRunning));
-            CanPauseResume = true; // session started
+       CanPauseResume = true; // session started
         }
 
         public void Stop()

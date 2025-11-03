@@ -11,7 +11,8 @@
     Background="Transparent"
     WindowStyle="None"
     AllowsTransparency="True"
-    ResizeMode="NoResize">
+    ResizeMode="NoResize"
+    Icon="pack://application:,,,/Assets/app_icon.ico">
  
     <Window.Resources>
         <conv:BooleanToStatusConverter x:Key="BooleanToStatusConverter" />
