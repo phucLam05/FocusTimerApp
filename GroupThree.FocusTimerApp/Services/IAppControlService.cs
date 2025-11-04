@@ -2,7 +2,7 @@
 using GroupThree.FocusTimerApp.Models;
 using System;
 using System.Collections.Generic;
-using GroupThree.FocusTimerApp.Models;
+// using GroupThree.FocusTimerApp.Models; // <-- FIX: Removed duplicate line
 
 namespace GroupThree.FocusTimerApp.AppControl
 {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows.Input;
 using GroupThree.FocusTimerApp.Commands;
 using GroupThree.FocusTimerApp.Services;
@@ -250,7 +250,10 @@ namespace GroupThree.FocusTimerApp.ViewModels
         {
             var menu = new System.Windows.Forms.ContextMenuStrip();
             var openItem = new System.Windows.Forms.ToolStripMenuItem("Open");
+
+            // Dòng này gọi ShowMainWindow
             openItem.Click += (s, e) => ShowMainWindow();
+
             var settingsItem = new System.Windows.Forms.ToolStripMenuItem("Settings");
             settingsItem.Click += (s, e) => _windowService.ShowSettingsWindow();
             var exitItem = new System.Windows.Forms.ToolStripMenuItem("Exit");
@@ -262,13 +265,22 @@ namespace GroupThree.FocusTimerApp.ViewModels
             menu.Items.Add(exitItem);
 
             _notifyIcon.ContextMenuStrip = menu;
+
+            // Dòng này cũng gọi ShowMainWindow
             _notifyIcon.DoubleClick += (s, e) => ShowMainWindow();
         }
+
+        // Đây là bên trong file MainViewModel.cs của bạn
 
         private void ShowMainWindow()
         {
             try
             {
+                //===== LOGIC MỚI CHO YÊU CẦU CỦA BẠN =====
+                // 4. Tự động TẮT overlay khi mở lại từ khay
+                _overlay_service.HideOverlay();
+                //===== KẾT THÚC LOGIC MỚI =====
+
                 var win = System.Windows.Application.Current?.MainWindow;
                 if (win != null)
                 {

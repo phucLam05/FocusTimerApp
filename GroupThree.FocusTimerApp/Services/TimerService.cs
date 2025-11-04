@@ -51,6 +51,7 @@ namespace GroupThree.FocusTimerApp.Services
         public TimeSpan LongBreak { get; set; } = TimeSpan.FromMinutes(15);
         public int LongBreakAfterShortBreakCount { get; set; } = 4;
 
+
         public TimerService()
         {
             _timer = new System.Timers.Timer(1000);
@@ -82,6 +83,7 @@ namespace GroupThree.FocusTimerApp.Services
                 if (remaining <= TimeSpan.Zero)
                 {
                     // break ended -> resume work
+                    Finished?.Invoke(this, EventArgs.Empty); // <-- FIX: Invoke event
                     ResumeWorkAfterBreak();
                     return;
                 }
@@ -101,6 +103,7 @@ namespace GroupThree.FocusTimerApp.Services
                     if (remaining <= TimeSpan.Zero)
                     {
                         // Work session finished -> start break (short or long)
+                        Finished?.Invoke(this, EventArgs.Empty); // <-- FIX: Invoke event
                         StartNextBreakAfterWork();
                         return;
                     }
@@ -199,24 +202,24 @@ namespace GroupThree.FocusTimerApp.Services
 
             _isRunning = false;
             _timer.Stop();
-      
-    // Accumulate elapsed time for current segment
-     if (_startTime.HasValue)
-            {
- _segmentElapsedOffset += DateTime.UtcNow - _startTime.Value;
-            }
-            
-            _startTime = null;
-  }
 
-      public void Resume()
+            // Accumulate elapsed time for current segment
+            if (_startTime.HasValue)
+            {
+                _segmentElapsedOffset += DateTime.UtcNow - _startTime.Value;
+            }
+
+            _startTime = null;
+        }
+
+        public void Resume()
         {
-    if (_isRunning) return;
- 
-         // Resume from where we paused - _segmentElapsedOffset already has accumulated time
-   _startTime = DateTime.UtcNow;
+            if (_isRunning) return;
+
+            // Resume from where we paused - _segmentElapsedOffset already has accumulated time
+            _startTime = DateTime.UtcNow;
             _isRunning = true;
-        _timer.Start();
+            _timer.Start();
         }
 
         public void Stop()
