@@ -10,6 +10,7 @@ namespace GroupThree.FocusTimerApp.Services
         void Pause();
         bool IsPlaying { get; }
         string? CurrentFile { get; }
+        event EventHandler? PlaybackEnded; // Add event for playback ended
     }
 
     public class MediaPlaybackService : IMediaPlaybackService, IDisposable
@@ -18,6 +19,8 @@ namespace GroupThree.FocusTimerApp.Services
         private bool _isPlaying;
         public bool IsPlaying => _isPlaying;
         public string? CurrentFile { get; private set; }
+        
+        public event EventHandler? PlaybackEnded;
 
         public void Play(string filePath)
         {
@@ -50,6 +53,9 @@ namespace GroupThree.FocusTimerApp.Services
         private void OnEnded(object? s, EventArgs e)
         {
             _isPlaying = false;
+            CurrentFile = null;
+            // Notify subscribers that playback has ended
+            PlaybackEnded?.Invoke(this, EventArgs.Empty);
         }
 
         public void Dispose()
