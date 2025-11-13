@@ -67,6 +67,9 @@ namespace GroupThree.FocusTimerApp.ViewModels
             _settingsService.SaveSettings(cfg);
 
             _hotkeyService?.ReloadHotkeys();
+
+            // Show success dialog
+            ShowSuccessDialog("Settings Saved", "Hotkey settings have been saved successfully!");
         }
 
         private void ResetDefaults()
@@ -77,6 +80,22 @@ namespace GroupThree.FocusTimerApp.ViewModels
             LoadFromConfig();
 
             _hotkeyService?.ReloadHotkeys();
+
+            // Show success dialog
+            ShowSuccessDialog("Settings Reset", "Hotkey settings have been reset to default!");
+        }
+
+        private void ShowSuccessDialog(string title, string message)
+        {
+            try
+            {
+                var dialog = new Views.SuccessDialog(title, message)
+                {
+                    Owner = System.Windows.Application.Current?.MainWindow
+                };
+                dialog.ShowDialog();
+            }
+            catch { }
         }
 
         private HotkeyService? _hotkey_service_builder()

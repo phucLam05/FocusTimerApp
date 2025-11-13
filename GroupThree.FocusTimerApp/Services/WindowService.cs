@@ -25,6 +25,10 @@
                     (SettingsService?)_serviceProvider.GetService(typeof(SettingsService))
                     ?? new SettingsService();
 
+                var themeService =
+                    (ThemeService?)_serviceProvider.GetService(typeof(ThemeService))
+                    ?? new ThemeService(settingsService);
+
                 var focusService =
                     (AppFocusService?)_serviceProvider.GetService(typeof(AppFocusService))
                     ?? new AppFocusService(settingsService);
@@ -33,7 +37,7 @@
                     (TimerService?)_serviceProvider.GetService(typeof(TimerService))
                     ?? new TimerService();
 
-                var vm = new SettingsViewModel(settingsService, hotkey, focusService, timerService);
+                var vm = new SettingsViewModel(settingsService, themeService, hotkey, focusService, timerService);
                 var window = new SettingsWindow
                 {
                     DataContext = vm,

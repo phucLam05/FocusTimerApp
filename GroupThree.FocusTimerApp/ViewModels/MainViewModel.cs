@@ -1,10 +1,8 @@
-using System;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 using GroupThree.FocusTimerApp.Commands;
 using GroupThree.FocusTimerApp.Services;
 using System.Collections.ObjectModel;
 using GroupThree.FocusTimerApp.Models;
-using System.IO;
 
 namespace GroupThree.FocusTimerApp.ViewModels
 {
@@ -14,16 +12,25 @@ namespace GroupThree.FocusTimerApp.ViewModels
         private readonly IWindowService _windowService;
         private readonly IOverlayService _overlay_service;
         private readonly SettingsService _settingsService;
-        private readonly System.Windows.Forms.NotifyIcon _notifyIcon;
+        private readonly NotifyIcon _notifyIcon;
         private readonly IMp3LibraryService? _mp3Library;
         private readonly IPlaylistStorageService? _playlistStorage;
         private readonly IMediaPlaybackService? _mediaPlayback;
+
+        public ThemeService ThemeService { get; }
 
         private string _timeText = "00:00:00";
         public string TimeText
         {
             get => _timeText;
             set => SetProperty(ref _timeText, value);
+        }
+
+        private string _currentPhase = "Ready";
+        public string CurrentPhase
+        {
+            get => _currentPhase;
+            set => SetProperty(ref _currentPhase, value);
         }
 
         private double _progress;
@@ -44,6 +51,10 @@ namespace GroupThree.FocusTimerApp.ViewModels
                     // reset timer state when UI mode changes
                     ResetState();
 
+                    // Notify mode-related properties
+                    RaisePropertyChanged(nameof(IsPomodoroMode));
+                    RaisePropertyChanged(nameof(IsTrackingMode));
+
                     // persist selected mode to settings
                     try
                     {
@@ -63,6 +74,20 @@ namespace GroupThree.FocusTimerApp.ViewModels
             private set => SetProperty(ref _isTimerRunning, value);
         }
 
+        // Alias for better XAML binding clarity
+        public bool IsRunning => IsTimerRunning;
+
+        private bool _isPlaying;
+        public bool IsPlaying
+        {
+            get => _isPlaying;
+            private set => SetProperty(ref _isPlaying, value);
+        }
+
+        public bool IsPomodoroMode => string.Equals(SelectedMode, "Pomodoro", StringComparison.OrdinalIgnoreCase);
+        public bool IsTrackingMode => string.Equals(SelectedMode, "Tracking", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(SelectedMode, "Basic", StringComparison.OrdinalIgnoreCase);
+
         private bool _canPauseResume;
         public bool CanPauseResume
         {
@@ -78,6 +103,23 @@ namespace GroupThree.FocusTimerApp.ViewModels
             }
         }
 
+        // Track if timer is paused (started but not running)
+        private bool _isPaused;
+        public bool IsPaused
+        {
+            get => _isPaused;
+            private set
+            {
+                if (SetProperty(ref _isPaused, value))
+                {
+                    RaisePropertyChanged(nameof(PauseButtonText));
+                }
+            }
+        }
+
+        // Dynamic text for pause/resume button
+        public string PauseButtonText => IsPaused ? "Resume" : "Pause";
+
         public ObservableCollection<Mp3Track> Tracks { get; } = new();
 
         public ICommand StartCommand { get; }
@@ -85,6 +127,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public ICommand StopCommand { get; }
         public ICommand OpenSettingsCommand { get; }
         public ICommand ToggleOverlayCommand { get; }
+        public ICommand ToggleThemeCommand { get; }
         public ICommand AddTrackCommand { get; }
         public ICommand RemoveSelectedTrackCommand { get; }
         public ICommand PlaySelectedTrackCommand { get; }
@@ -105,7 +148,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
             }
         }
 
-        public MainViewModel(ITimerService timerService, IWindowService windowService, IOverlayService overlayService, SettingsService settingsService, IMp3LibraryService? mp3Library = null, IPlaylistStorageService? playlistStorage = null, IMediaPlaybackService? mediaPlayback = null)
+        public MainViewModel(ITimerService timerService, IWindowService windowService, IOverlayService overlayService, SettingsService settingsService, ThemeService themeService, IMp3LibraryService? mp3Library = null, IPlaylistStorageService? playlistStorage = null, IMediaPlaybackService? mediaPlayback = null)
         {
             _timerService = timerService ?? throw new ArgumentNullException(nameof(timerService));
             _window_service_or_default(windowService);
@@ -113,18 +156,25 @@ namespace GroupThree.FocusTimerApp.ViewModels
             _overlay_service_or_default(overlayService);
             _overlay_service = overlayService ?? throw new ArgumentNullException(nameof(overlayService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+            ThemeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
             _mp3Library = mp3Library; // optional DI
             _playlistStorage = playlistStorage; // optional DI
             _mediaPlayback = mediaPlayback; // optional DI
 
-            // setup tray icon for notifications (use fully-qualified types to avoid ambiguous using)
+            // setup tray icon for notifications with custom icon
             _notifyIcon = new System.Windows.Forms.NotifyIcon()
             {
-                Icon = System.Drawing.SystemIcons.Information,
-                Visible = true,
+                Icon = Properties.Resources.AppIcon,
+                Visible = false, // Start hidden, will be shown based on RunInBackground setting
                 Text = "Focus Timer"
             };
             ConfigureTrayIcon();
+
+            // Subscribe to settings changes to update tray icon visibility
+            _settingsService.SettingsChanged += OnSettingsChanged;
+            
+            // Set initial tray icon visibility based on current settings
+            UpdateTrayIconVisibility();
 
             StartCommand = new RelayCommand<object>(_ => Start());
             // Make Pause button toggle between Pause and Resume
@@ -132,6 +182,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
             StopCommand = new RelayCommand<object>(_ => Stop());
             OpenSettingsCommand = new RelayCommand<object>(_ => _windowService.ShowSettingsWindow());
             ToggleOverlayCommand = new RelayCommand<object>(_ => _overlay_service.ToggleOverlay());
+            ToggleThemeCommand = new RelayCommand<object>(_ => ThemeService.ToggleTheme());
             AddTrackCommand = new RelayCommand<object>(_ => AddTrack());
             RemoveSelectedTrackCommand = new RelayCommand<object>(_ => RemoveSelectedTrack(), _ => SelectedTrack != null);
             PlaySelectedTrackCommand = new RelayCommand<object>(_ => PlaySelectedTrack(), _ => SelectedTrack != null);
@@ -140,6 +191,12 @@ namespace GroupThree.FocusTimerApp.ViewModels
             _timerService.Tick += OnTick;
             _timerService.Finished += OnFinished;
             _timerService.NotificationRequested += OnNotificationRequested;
+
+            // Subscribe to media playback ended event
+            if (_mediaPlayback != null)
+            {
+                _mediaPlayback.PlaybackEnded += OnPlaybackEnded;
+            }
 
             // initialize SelectedMode from settings
             try
@@ -154,11 +211,32 @@ namespace GroupThree.FocusTimerApp.ViewModels
             LoadPlaylistOrDefault();
         }
 
+        private void OnSettingsChanged(ConfigSetting cfg)
+        {
+            UpdateTrayIconVisibility();
+        }
+
+        private void UpdateTrayIconVisibility()
+        {
+            try
+            {
+                var cfg = _settingsService.LoadSettings();
+                bool runInBackground = cfg?.General?.RunInBackground ?? true;
+                _notifyIcon.Visible = runInBackground;
+            }
+            catch
+            {
+                _notifyIcon.Visible = true; // default to visible if error
+            }
+        }
+
         private void ConfigureTrayIcon()
         {
             var menu = new System.Windows.Forms.ContextMenuStrip();
             var openItem = new System.Windows.Forms.ToolStripMenuItem("Open");
+
             openItem.Click += (s, e) => ShowMainWindow();
+
             var settingsItem = new System.Windows.Forms.ToolStripMenuItem("Settings");
             settingsItem.Click += (s, e) => _windowService.ShowSettingsWindow();
             var exitItem = new System.Windows.Forms.ToolStripMenuItem("Exit");
@@ -170,6 +248,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
             menu.Items.Add(exitItem);
 
             _notifyIcon.ContextMenuStrip = menu;
+
             _notifyIcon.DoubleClick += (s, e) => ShowMainWindow();
         }
 
@@ -177,6 +256,8 @@ namespace GroupThree.FocusTimerApp.ViewModels
         {
             try
             {
+                _overlay_service.HideOverlay();
+
                 var win = System.Windows.Application.Current?.MainWindow;
                 if (win != null)
                 {
@@ -197,58 +278,97 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 _notifyIcon.Dispose();
             }
             catch { }
-            System.Windows.Application.Current?.Shutdown();
+            
+            try
+            {
+                // Use ForceClose if MainWindow supports it
+                var mainWindow = System.Windows.Application.Current?.MainWindow as Views.MainWindow;
+                if (mainWindow != null)
+                {
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        mainWindow.ForceClose();
+                    });
+                }
+                else
+                {
+                    System.Windows.Application.Current?.Shutdown();
+                }
+            }
+            catch 
+            {
+                System.Windows.Application.Current?.Shutdown();
+            }
         }
 
         private void OnTick(object? s, TimerTickEventArgs e)
         {
-            // Show elapsed (count-up) for both Basic and Pomodoro
-            TimeText = e.Elapsed.ToString(@"hh\:mm\:ss");
+            // For Pomodoro mode, show countdown (remaining time)
+            // For Basic/Tracking mode, show count-up (elapsed time)
+            if (string.Equals(SelectedMode, "Pomodoro", StringComparison.OrdinalIgnoreCase))
+            {
+                TimeText = e.Remaining.ToString(@"hh\:mm\:ss");
+
+                // Update phase indicator
+                CurrentPhase = e.Mode switch
+                {
+                    Services.TimerMode.Pomodoro => "Focus Time",
+                    Services.TimerMode.ShortBreak => "Short Break",
+                    Services.TimerMode.LongBreak => "Long Break",
+                    _ => "Ready"
+                };
+            }
+            else
+            {
+                TimeText = e.Elapsed.ToString(@"hh\:mm\:ss");
+                CurrentPhase = "Tracking";
+            }
+
             Progress = e.Progress;
             IsTimerRunning = _timerService.IsRunning;
+            RaisePropertyChanged(nameof(IsRunning));
         }
 
         private void OnFinished(object? s, EventArgs e)
         {
-            // keep simple: show a balloon
-            try
-            {
-                _notifyIcon.Visible = true;
-                _notifyIcon.BalloonTipTitle = "Focus Timer";
-                _notifyIcon.BalloonTipText = "Phase finished.";
-                _notifyIcon.ShowBalloonTip(2000);
-            }
-            catch { }
+            // Use NotificationService which checks EnableNotifications setting
+            NotificationService.Show("Focus Timer", "Phase finished.", System.Windows.Forms.ToolTipIcon.Info);
+
             IsTimerRunning = _timerService.IsRunning;
             CanPauseResume = false; // finished means no active session
+            IsPaused = false; // reset paused state
         }
 
         private void OnNotificationRequested(object? s, string message)
         {
-            try
-            {
-                _notifyIcon.Visible = true;
-                _notifyIcon.BalloonTipTitle = "Focus Timer";
-                _notifyIcon.BalloonTipText = message;
-                _notifyIcon.ShowBalloonTip(3000);
-            }
-            catch { }
+            // Use NotificationService which checks EnableNotifications setting
+            NotificationService.Show("Focus Timer", message, System.Windows.Forms.ToolTipIcon.Info);
         }
 
         public void Start()
         {
-            // ensure tray icon visible when user starts a phase
-            try { _notifyIcon.Visible = true; } catch { }
-
-            if (string.Equals(SelectedMode, "Pomodoro", StringComparison.OrdinalIgnoreCase))
+            // Check if timer is paused - if yes, resume instead of starting fresh
+            if (IsPaused)
             {
-                _timerService.StartPomodoro();
+                // Timer was paused, so resume it
+                _timerService.Resume();
+                IsPaused = false;
             }
             else
             {
-                _timerService.StartBasic();
+                // Starting fresh
+                if (string.Equals(SelectedMode, "Pomodoro", StringComparison.OrdinalIgnoreCase))
+                {
+                    _timerService.StartPomodoro();
+                }
+                else
+                {
+                    _timerService.StartBasic();
+                }
             }
+
             IsTimerRunning = _timerService.IsRunning;
+            RaisePropertyChanged(nameof(IsRunning));
             CanPauseResume = true; // session started
         }
 
@@ -259,7 +379,9 @@ namespace GroupThree.FocusTimerApp.ViewModels
             TimeText = TimeSpan.Zero.ToString(@"hh\:mm\:ss");
             Progress = 0;
             IsTimerRunning = _timerService.IsRunning;
+            RaisePropertyChanged(nameof(IsRunning));
             CanPauseResume = false;
+            IsPaused = false;
         }
 
         public void TogglePause()
@@ -269,12 +391,15 @@ namespace GroupThree.FocusTimerApp.ViewModels
             if (_timerService.IsRunning)
             {
                 _timerService.Pause();
+                IsPaused = true;
             }
             else
             {
                 _timerService.Resume();
+                IsPaused = false;
             }
             IsTimerRunning = _timerService.IsRunning;
+            RaisePropertyChanged(nameof(IsRunning));
         }
 
         public void HandleHotkeyAction(string action)
@@ -334,8 +459,10 @@ namespace GroupThree.FocusTimerApp.ViewModels
             // show elapsed starting at zero for both modes (count-up)
             TimeText = TimeSpan.Zero.ToString(@"hh\:mm\:ss");
             Progress = 0;
+            CurrentPhase = "Ready";
             IsTimerRunning = _timerService.IsRunning;
             CanPauseResume = false; // no active session after reset
+            IsPaused = false; // reset paused state
         }
 
         private void LoadPlaylistOrDefault()
@@ -424,7 +551,9 @@ namespace GroupThree.FocusTimerApp.ViewModels
             try
             {
                 _mediaPlayback.Play(SelectedTrack.FilePath);
+                IsPlaying = true;
                 (StopPlaybackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+                (PlaySelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
             }
             catch { }
         }
@@ -435,9 +564,19 @@ namespace GroupThree.FocusTimerApp.ViewModels
             try
             {
                 _mediaPlayback.Stop();
+                IsPlaying = false;
                 (StopPlaybackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+                (PlaySelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
             }
             catch { }
+        }
+
+        private void OnPlaybackEnded(object? sender, EventArgs e)
+        {
+            // Update UI when playback ends
+            IsPlaying = false;
+            (StopPlaybackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+            (PlaySelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
         }
     }
 }

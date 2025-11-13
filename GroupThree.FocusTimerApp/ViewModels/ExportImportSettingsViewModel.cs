@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Text;
 using System.Text.Json;
-using System.Windows;
 using System.Windows.Input;
 using GroupThree.FocusTimerApp.Commands;
 using GroupThree.FocusTimerApp.Models;
 using GroupThree.FocusTimerApp.Services;
 using System.IO;
 using System.IO.Compression;
+using System.Windows.Threading;
 
 namespace GroupThree.FocusTimerApp.ViewModels
 {
@@ -47,18 +47,20 @@ namespace GroupThree.FocusTimerApp.ViewModels
         {
             try
             {
-                System.Windows.Clipboard.SetText(ExportCode ?? string.Empty);
-                StatusMessage = "Configuration code copied.";
+                if (!string.IsNullOrEmpty(ExportCode))
+                {
+                    System.Windows.Clipboard.SetText(ExportCode);
+                    StatusMessage = "✓ Configuration code copied to clipboard.";
+                }
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Cannot copy: {ex.Message}";
+                StatusMessage = $"✗ Cannot copy: {ex.Message}";
             }
         }
 
         private static string Base64UrlEncode(byte[] data)
         {
-            // URL-safe Base64 without padding
             return Convert.ToBase64String(data)
                 .TrimEnd('=')
                 .Replace('+', '-')
@@ -119,12 +121,12 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 var b64Url = Base64UrlEncode(compressed);
 
                 ExportCode = b64Url;
-                StatusMessage = "Configuration code generated from current settings.";
+                StatusMessage = "✓ Configuration code generated successfully.";
             }
             catch (Exception ex)
             {
                 ExportCode = string.Empty;
-                StatusMessage = $"Failed to generate code: {ex.Message}";
+                StatusMessage = $"✗ Failed to generate code: {ex.Message}";
             }
         }
 
@@ -132,35 +134,34 @@ namespace GroupThree.FocusTimerApp.ViewModels
         {
             if (string.IsNullOrWhiteSpace(ImportCode))
             {
-                StatusMessage = "Import code is empty.";
+                StatusMessage = "✗ Import code is empty.";
                 return;
             }
 
             try
             {
-                // Decode URL-safe Base64
+                // Decode and decompress
                 var raw = Base64UrlDecode(ImportCode);
-
-                // Only support short compressed format
                 byte[] jsonBytes;
+
                 try
                 {
                     jsonBytes = DecompressBrotli(raw);
                 }
                 catch (InvalidDataException)
                 {
-                    StatusMessage = "Invalid code (Brotli decompression failed).";
+                    StatusMessage = "✗ Invalid code format (decompression failed).";
                     return;
                 }
                 catch (IOException ex)
                 {
-                    StatusMessage = $"Invalid code (Brotli I/O error): {ex.Message}";
+                    StatusMessage = $"✗ Invalid code: {ex.Message}";
                     return;
                 }
 
                 var json = Encoding.UTF8.GetString(jsonBytes);
 
-                // Deserialize and basic validation
+                // Deserialize
                 var cfg = JsonSerializer.Deserialize<ConfigSetting>(json, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -168,36 +169,48 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
                 if (cfg == null)
                 {
-                    StatusMessage = "Invalid code (could not read configuration).";
+                    StatusMessage = "✗ Invalid configuration data.";
                     return;
                 }
 
-                // Optional minimal sanity checks
+                // Ensure all sections exist
                 cfg.General ??= new GeneralSettings();
                 cfg.Notification ??= new NotificationSettings();
                 cfg.Theme ??= new ThemeSettings();
                 cfg.TimerSettings ??= new TimerSettings();
 
-                // Save and propagate
+                // Save settings
                 _settingsService.SaveSettings(cfg);
-                _hotkeyService?.ReloadHotkeys();
 
-                StatusMessage = "Settings imported and applied.";
+                // Reload hotkeys on UI thread
+                System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        _hotkeyService?.ReloadHotkeys();
+                    }
+                    catch (Exception ex)
+                    {
+                        StatusMessage = $"⚠ Settings imported but hotkeys failed: {ex.Message}";
+                        return;
+                    }
 
-                // Refresh export so user can copy the normalized form
-                GenerateExportCode();
+                    StatusMessage = "✓ Settings imported and applied successfully!";
+                    GenerateExportCode(); // Refresh export code
+
+                }), DispatcherPriority.Normal);
             }
             catch (FormatException)
             {
-                StatusMessage = "Invalid Base64 code.";
+                StatusMessage = "✗ Invalid Base64 code format.";
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                StatusMessage = "Invalid JSON inside code.";
+                StatusMessage = $"✗ Invalid JSON data: {ex.Message}";
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Unable to import: {ex.Message}";
+                StatusMessage = $"✗ Import failed: {ex.Message}";
             }
         }
     }

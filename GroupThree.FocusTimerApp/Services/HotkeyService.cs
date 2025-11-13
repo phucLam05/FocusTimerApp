@@ -12,9 +12,7 @@ namespace GroupThree.FocusTimerApp.Services
 {
     public class HotkeyService : IDisposable
     {
-        // ==============================
         // Win32 API Import
-        // ==============================
         [DllImport("user32.dll")]
         private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
@@ -23,9 +21,6 @@ namespace GroupThree.FocusTimerApp.Services
 
         private const int WM_HOTKEY = 0x0312;
 
-        // ==============================
-        // Fields
-        // ==============================
         private readonly Dictionary<int, string> _registeredHotkeys = new();
         private readonly Window _window;
         private readonly SettingsService _settingsService;
@@ -35,9 +30,7 @@ namespace GroupThree.FocusTimerApp.Services
         // Sự kiện để ViewModel hoặc MainWindow lắng nghe
         public event Action<string>? HotkeyPressed;
 
-        // ==============================
         // Constructor
-        // ==============================
         public HotkeyService(Window window, SettingsService settingsService)
         {
             _window = window ?? throw new ArgumentNullException(nameof(window));
@@ -48,9 +41,7 @@ namespace GroupThree.FocusTimerApp.Services
             _source.AddHook(HwndHook);
         }
 
-        // ==============================
         // Đăng ký tất cả hotkey từ config
-        // ==============================
         public void RegisterHotkeys()
         {
             var hotkeys = _settingsService.LoadHotkeys();
@@ -59,9 +50,6 @@ namespace GroupThree.FocusTimerApp.Services
                 Console.WriteLine("No hotkeys found to register.");
                 return;
             }
-
-            // Clear previous registration flags in model
-            foreach (var h in hotkeys) h.IsRegistered = false;
 
             foreach (var binding in hotkeys)
             {
@@ -73,8 +61,7 @@ namespace GroupThree.FocusTimerApp.Services
                     if (binding.ParsedModifiers.HasFlag(ModifierKeys.Shift)) modifiers |= HotKeyHelpers.MOD_SHIFT;
                     if (binding.ParsedModifiers.HasFlag(ModifierKeys.Windows)) modifiers |= HotKeyHelpers.MOD_WIN;
 
-                    bool success = RegisterHotkey(binding, modifiers, binding.ParsedKey, out int id);
-                    binding.IsRegistered = success;
+                    RegisterHotkey(binding, modifiers, binding.ParsedKey, out int id);
                 }
                 catch (Exception ex)
                 {
@@ -83,10 +70,8 @@ namespace GroupThree.FocusTimerApp.Services
             }
         }
 
-        // ==============================
         // Đăng ký 1 hotkey cụ thể
         // Returns whether registration succeeded and outputs id
-        // ==============================
         private bool RegisterHotkey(HotkeyBinding binding, uint modifiers, Key key, out int id)
         {
             id = -1;
@@ -122,9 +107,7 @@ namespace GroupThree.FocusTimerApp.Services
             }
         }
 
-        // ==============================
         // Lắng nghe sự kiện WM_HOTKEY từ Windows
-        // ==============================
         private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (msg == WM_HOTKEY)
@@ -139,9 +122,7 @@ namespace GroupThree.FocusTimerApp.Services
             return IntPtr.Zero;
         }
 
-        // ==============================
         // Gỡ đăng ký tất cả hotkey khi app tắt
-        // ==============================
         public void UnregisterAll()
         {
             IntPtr handle = new WindowInteropHelper(_window).Handle;
@@ -154,19 +135,10 @@ namespace GroupThree.FocusTimerApp.Services
 
             _registeredHotkeys.Clear();
 
-            // Clear registration flags in model
-            var hotkeys = _settingsService.LoadHotkeys();
-            if (hotkeys != null)
-            {
-                foreach (var h in hotkeys) h.IsRegistered = false;
-            }
-
             Console.WriteLine("All hotkeys unregistered.");
         }
 
-        // ==============================
         // Dispose cleanup
-        // ==============================
         public void Dispose()
         {
             UnregisterAll();

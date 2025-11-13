@@ -1,0 +1,67 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  
+    <!-- Light Mode Colors - Improved Color Palette -->
+    <Color x:Key="WindowBackgroundColor">#f8f9fa</Color>
+    <Color x:Key="HeaderBackgroundColor">#ffffff</Color>
+    <Color x:Key="SidebarBackgroundColor">#f1f3f5</Color>
+    <Color x:Key="CardBackgroundColor">#ffffff</Color>
+    
+    <!-- Primary Button - More vibrant and pleasant -->
+    <Color x:Key="PrimaryButtonColor">#5b7fff</Color>
+    <Color x:Key="PrimaryButtonHoverColor">#4a6eef</Color>
+    
+    <!-- Secondary Button - Softer gray with slight blue tint -->
+    <Color x:Key="SecondaryButtonColor">#e8ecf4</Color>
+    <Color x:Key="SecondaryButtonHoverColor">#d6dce8</Color>
+    
+    <!-- Progress Bar -->
+    <Color x:Key="ProgressBackgroundColor">#e8ecf4</Color>
+    <Color x:Key="ProgressForegroundColor">#5b7fff</Color>
+    
+    <!-- Text Colors - Better contrast -->
+    <Color x:Key="TextPrimaryColor">#212529</Color>
+    <Color x:Key="TextSecondaryColor">#6c757d</Color>
+    
+    <!-- Border - Softer border -->
+    <Color x:Key="BorderColor">#dee2e6</Color>
+    
+    <!-- ScrollBar Colors - New additions for light theme -->
+    <Color x:Key="ScrollBarThumbColor">#c0c8d0</Color>
+    <Color x:Key="ScrollBarThumbHoverColor">#a0aab5</Color>
+    
+    <!-- Input Controls (TextBox, etc.) -->
+    <Color x:Key="InputBackgroundColor">#f1f3f5</Color>
+    <Color x:Key="InputBackgroundHoverColor">#e9ecef</Color>
+    <Color x:Key="InputBackgroundFocusColor">#ffffff</Color>
+    <Color x:Key="InputBorderColor">#5b7fff</Color>
+    <Color x:Key="InputBorderHoverColor">#7a92ff</Color>
+    <Color x:Key="InputBorderFocusColor">#4a6eef</Color>
+    
+    <!-- Close Button Colors -->
+    <Color x:Key="CloseButtonHoverColor">#ff5252</Color>
+    
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowBackgroundColor}" />
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="{StaticResource HeaderBackgroundColor}" />
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{StaticResource SidebarBackgroundColor}" />
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}" />
+    <SolidColorBrush x:Key="PrimaryButtonBrush" Color="{StaticResource PrimaryButtonColor}" />
+    <SolidColorBrush x:Key="PrimaryButtonHoverBrush" Color="{StaticResource PrimaryButtonHoverColor}" />
+    <SolidColorBrush x:Key="SecondaryButtonBrush" Color="{StaticResource SecondaryButtonColor}" />
+    <SolidColorBrush x:Key="SecondaryButtonHoverBrush" Color="{StaticResource SecondaryButtonHoverColor}" />
+    <SolidColorBrush x:Key="ProgressBackgroundBrush" Color="{StaticResource ProgressBackgroundColor}" />
+    <SolidColorBrush x:Key="ProgressForegroundBrush" Color="{StaticResource ProgressForegroundColor}" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="{StaticResource ScrollBarThumbColor}" />
+    <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="{StaticResource ScrollBarThumbHoverColor}" />
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="{StaticResource InputBackgroundColor}" />
+    <SolidColorBrush x:Key="InputBackgroundHoverBrush" Color="{StaticResource InputBackgroundHoverColor}" />
+    <SolidColorBrush x:Key="InputBackgroundFocusBrush" Color="{StaticResource InputBackgroundFocusColor}" />
+    <SolidColorBrush x:Key="InputBorderBrush" Color="{StaticResource InputBorderColor}" />
+    <SolidColorBrush x:Key="InputBorderHoverBrush" Color="{StaticResource InputBorderHoverColor}" />
+    <SolidColorBrush x:Key="InputBorderFocusBrush" Color="{StaticResource InputBorderFocusColor}" />
+    <SolidColorBrush x:Key="CloseButtonHoverBrush" Color="{StaticResource CloseButtonHoverColor}" />
+</ResourceDictionary>

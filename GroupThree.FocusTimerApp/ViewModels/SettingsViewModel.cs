@@ -12,6 +12,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         private readonly HotkeyService? _hotkeyService;
         private readonly AppFocusService _focusService;
         private readonly TimerService _timerService;
+        private readonly Services.ThemeService _themeService;
 
         private object _currentView = null!;
         public object CurrentView
@@ -41,12 +42,13 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public ICommand ShowFocusZoneCommand { get; }
         public ICommand ShowExportImportCommand { get; }
 
-        public SettingsViewModel(SettingsService settingsService, HotkeyService? hotkeyService, AppFocusService focusService, TimerService timerService)
+        public SettingsViewModel(SettingsService settingsService, Services.ThemeService themeService, HotkeyService? hotkeyService, AppFocusService focusService, TimerService timerService)
         {
             _settingsService = settingsService;
             _hotkeyService = hotkeyService;
             _focusService = focusService;
             _timerService = timerService;
+            _themeService = themeService;
 
             ShowGeneralCommand = new RelayCommand<object>(_ => ShowGeneral());
             ShowNotificationCommand = new RelayCommand<object>(_ => ShowNotification());
@@ -61,7 +63,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         }
 
         private void ShowGeneral() =>
-            CurrentView = new GeneralSettingsViewModel(_settingsService);
+            CurrentView = new GeneralSettingsViewModel(_settingsService, _themeService);
 
         private void ShowNotification() =>
             CurrentView = new NotificationSettingsViewModel(_settingsService);
