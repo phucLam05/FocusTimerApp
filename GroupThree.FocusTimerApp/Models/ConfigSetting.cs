@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GroupThree.FocusTimerApp.Models
+﻿namespace GroupThree.FocusTimerApp.Models
 {
     public class ConfigSetting
     {
@@ -43,7 +37,6 @@ namespace GroupThree.FocusTimerApp.Models
         };
         public GeneralSettings General { get; set; } = new();
         public NotificationSettings Notification { get; set; } = new();
-        // Danh sách ứng dụng vùng tập trung (được lưu chung file config và xuất/import cùng Settings)
         public List<RegisteredAppModel> FocusApps { get; set; } = new();
     }
 
@@ -61,8 +54,6 @@ namespace GroupThree.FocusTimerApp.Models
         public int LongBreakEvery { get; set; } = 4;
         // Interval in minutes for tracking/basic notifications
         public int TrackingInterval { get; set; } = 15;
-        // Whether to enable notifications for timer events
-        public bool EnableNotifications { get; set; } = true;
     }
 
     public class ThemeSettings
@@ -80,6 +71,5 @@ namespace GroupThree.FocusTimerApp.Models
     public class NotificationSettings
     {
         public bool EnableNotifications { get; set; } = true;
-        public bool EnableSound { get; set; } = true;
     }
 }

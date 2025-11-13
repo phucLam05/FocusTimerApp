@@ -21,7 +21,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         {
             _settingsService = settingsService;
             ThemeService = themeService;
-            
+
             var cfg = _settingsService.LoadSettings();
             StartWithWindows = cfg.General?.StartWithWindows ?? false;
             RunInBackground = cfg.General?.RunInBackground ?? true;
@@ -53,7 +53,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 startupSvc?.ApplyStartupSetting(StartWithWindows);
             }
             catch { }
-            
+
             // Show success dialog
             ShowSuccessDialog("Settings Saved", "General settings have been saved successfully!");
         }

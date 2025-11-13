@@ -15,7 +15,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
     {
         private readonly AppFocusService _focusService;
         private readonly TimerService _timerService;
-        // private System.Windows.Forms.NotifyIcon? _notifyIcon;
 
         // Running apps list
         public ObservableCollection<RegisteredAppModel> RunningApps { get; } = new();
@@ -35,28 +34,12 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
             AddAppCommand = new RelayCommand<RegisteredAppModel>(AddApp);
             RemoveAppCommand = new RelayCommand<string>(RemoveApp);
-            RefreshRunningCommand = new RelayCommand(LoadRunningApps);
-            SaveCommand = new RelayCommand(SaveChanges);
-
-            // Initialize notification icon for showing messages
-            // InitializeNotifyIcon();
+            RefreshRunningCommand = new RelayCommand<object>(_ => LoadRunningApps());
+            SaveCommand = new RelayCommand<object>(_ => SaveChanges());
 
             LoadRunningApps();
             LoadFocusZoneApps();
         }
-
-        // private void InitializeNotifyIcon()
-        // {
-        //     try
-        //     {
-        //         _notifyIcon = new System.Windows.Forms.NotifyIcon
-        //         {
-        //             Visible = false, // Only show when needed
-        //             Icon = System.Drawing.SystemIcons.Application
-        //         };
-        //     }
-        //     catch { }
-        // }
 
         private void LoadRunningApps()
         {
@@ -78,6 +61,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
                     if (!string.IsNullOrEmpty(exePath))
                     {
+                        // Skip our own process
                         if (!string.IsNullOrEmpty(currentProcessPath) &&
                             string.Equals(exePath, currentProcessPath, StringComparison.OrdinalIgnoreCase))
                         {
@@ -93,27 +77,60 @@ namespace GroupThree.FocusTimerApp.ViewModels
                         RunningApps.Add(new RegisteredAppModel
                         {
                             AppName = proc.ProcessName,
-                            ExecutablePath = exePath,
-                            ProcessName = proc.ProcessName,
-                            IsRunning = true
+                            ExecutablePath = exePath
                         });
                     }
                 }
-                catch { /* Skip processes we can't access */ }
+                catch { /* Skip processes can't access */ }
             }
         }
 
         private void LoadFocusZoneApps()
         {
             FocusZoneApps.Clear();
-            var registeredApps = _focusService.GetRegisteredApps();
 
-            foreach (var app in registeredApps)
+            try
             {
-                if (!string.IsNullOrEmpty(app.ProcessName))
+                var registeredApps = _focusService.GetRegisteredApps();
+
+                foreach (var app in registeredApps)
                 {
-                    FocusZoneApps.Add(app.ProcessName);
+                    // Validate app có tên và đường dẫn hợp lệ
+                    if (string.IsNullOrWhiteSpace(app.AppName))
+                    {
+                        continue;
+                    }
+
+                    string displayName = app.AppName;
+
+                    // Validate executable tồn tại (optional warning)
+                    if (!string.IsNullOrEmpty(app.ExecutablePath))
+                    {
+                        try
+                        {
+                            if (!System.IO.File.Exists(app.ExecutablePath))
+                            {
+                                Debug.WriteLine($"[AppControlViewModel] Warning: App '{displayName}' executable not found: {app.ExecutablePath}");
+                                // Vẫn hiển thị app, cho phép user xóa nó
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"[AppControlViewModel] Cannot validate '{displayName}': {ex.Message}");
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(displayName) && !FocusZoneApps.Contains(displayName))
+                    {
+                        FocusZoneApps.Add(displayName);
+                    }
                 }
+
+                Debug.WriteLine($"[AppControlViewModel] Loaded {FocusZoneApps.Count} apps to Focus Zone display");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[AppControlViewModel] LoadFocusZoneApps error: {ex.Message}");
             }
         }
 
@@ -121,11 +138,29 @@ namespace GroupThree.FocusTimerApp.ViewModels
         {
             if (app == null) return;
 
-            if (!FocusZoneApps.Contains(app.ProcessName))
+            try
             {
-                _focusService.RegisterApp(app);
-                FocusZoneApps.Add(app.ProcessName);
-                RunningApps.Remove(app);
+                // Validate app có đủ thông tin
+                if (string.IsNullOrWhiteSpace(app.ExecutablePath))
+                {
+                    Debug.WriteLine("[AppControlViewModel] Cannot add app: No executable path");
+                    return;
+                }
+
+                string displayName = app.AppName;
+
+                if (!FocusZoneApps.Contains(displayName))
+                {
+                    _focusService.RegisterApp(app);
+                    FocusZoneApps.Add(displayName);
+                    RunningApps.Remove(app);
+
+                    Debug.WriteLine($"[AppControlViewModel] Added app: {displayName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[AppControlViewModel] AddApp error: {ex.Message}");
             }
         }
 
@@ -133,21 +168,29 @@ namespace GroupThree.FocusTimerApp.ViewModels
         {
             if (string.IsNullOrEmpty(appName)) return;
 
-            var registeredApp = _focusService.GetRegisteredApps()
-                .FirstOrDefault(a => a.ProcessName.Equals(appName, StringComparison.OrdinalIgnoreCase));
-
-            if (registeredApp != null)
+            try
             {
-                _focusService.UnregisterApp(registeredApp.ExecutablePath);
-                FocusZoneApps.Remove(appName);
-                LoadRunningApps(); // Refresh to show it in running apps again
+                var registeredApp = _focusService.GetRegisteredApps()
+                    .FirstOrDefault(a => a.AppName.Equals(appName, StringComparison.OrdinalIgnoreCase));
+
+                if (registeredApp != null)
+                {
+                    _focusService.UnregisterApp(registeredApp.ExecutablePath);
+                    FocusZoneApps.Remove(appName);
+                    LoadRunningApps(); // Refresh to show it in running apps again
+
+                    Debug.WriteLine($"[AppControlViewModel] Removed app: {appName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[AppControlViewModel] RemoveApp error: {ex.Message}");
             }
         }
 
         private void SaveChanges()
         {
             // Settings are auto-saved when adding/removing apps
-            // Show success dialog to user
             ShowSuccessDialog("Settings Saved", "Focus Zone apps settings have been saved successfully!");
         }
 

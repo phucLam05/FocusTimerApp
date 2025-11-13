@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Timers;
 using GroupThree.FocusTimerApp.Models;
@@ -33,7 +30,7 @@ namespace GroupThree.FocusTimerApp.Services
             // Subscribe to settings changes to keep in sync
             _settingsService.SettingsChanged += _ => LoadRegisteredAppsFromSettings();
 
-            // ✅ khởi động timer kiểm tra app foreground
+            // Khởi động timer kiểm tra app foreground
             _focusCheckTimer = new System.Timers.Timer(500);
             _focusCheckTimer.Elapsed += CheckForeground;
             _focusCheckTimer.AutoReset = true;
@@ -45,28 +42,34 @@ namespace GroupThree.FocusTimerApp.Services
         public void RegisterApp(RegisteredAppModel app)
         {
             if (app == null) return;
+
             lock (_lock)
             {
-                if (!_registeredApps.Any(a => NormalizePath(a.ExecutablePath) == NormalizePath(app.ExecutablePath)))
+                // Kiểm tra app đã tồn tại chưa
+                if (_registeredApps.Any(a => NormalizePath(a.ExecutablePath) == NormalizePath(app.ExecutablePath)))
                 {
-                    // Ensure ProcessName is set
-                    if (string.IsNullOrEmpty(app.ProcessName) && !string.IsNullOrEmpty(app.ExecutablePath))
+                    return;
+                }
+
+                // Validate executable exists
+                if (!string.IsNullOrEmpty(app.ExecutablePath))
+                {
+                    try
                     {
-                        try
+                        if (!System.IO.File.Exists(app.ExecutablePath))
                         {
-                            app.ProcessName = System.IO.Path.GetFileNameWithoutExtension(app.ExecutablePath);
-                        }
-                        catch
-                        {
-                            app.ProcessName = app.AppName;
+                            Debug.WriteLine($"[AppFocusService] Warning: Executable not found: {app.ExecutablePath}");
+                            // Still add it, user might have the file later
                         }
                     }
-
-                    // Mark as registered before persisting
-                    app.IsRegistered = true;
-                    _registeredApps.Add(app);
-                    PersistToSettings();
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[AppFocusService] Cannot validate path: {ex.Message}");
+                    }
                 }
+
+                _registeredApps.Add(app);
+                PersistToSettings();
             }
         }
 
@@ -145,7 +148,6 @@ namespace GroupThree.FocusTimerApp.Services
             LeftWorkZone?.Invoke();
         }
 
-        // 🔧 persistence via SettingsService
         private void PersistToSettings()
         {
             try
@@ -166,16 +168,45 @@ namespace GroupThree.FocusTimerApp.Services
             {
                 var cfg = _settingsService.LoadSettings();
                 var apps = cfg.FocusApps ?? new List<RegisteredAppModel>();
+
                 lock (_lock)
                 {
                     _registeredApps.Clear();
-                    // Chỉ nạp những app có IsRegistered = true
-                    foreach (var a in apps.Where(x => x.IsRegistered))
+
+                    // Load tất cả apps có tên và đường dẫn hợp lệ
+                    foreach (var app in apps)
                     {
-                        _registeredApps.Add(a);
+                        // Bỏ qua app không có tên hoặc đường dẫn
+                        if (string.IsNullOrWhiteSpace(app.AppName) &&
+                            string.IsNullOrWhiteSpace(app.ExecutablePath))
+                        {
+                            Debug.WriteLine("[AppFocusService] Skipping invalid app entry (no name or path)");
+                            continue;
+                        }
+
+                        // Validate executable exists (warning only, không block)
+                        if (!string.IsNullOrEmpty(app.ExecutablePath))
+                        {
+                            try
+                            {
+                                if (!System.IO.File.Exists(app.ExecutablePath))
+                                {
+                                    Debug.WriteLine($"[AppFocusService] Warning: Registered app executable not found: {app.ExecutablePath}");
+                                    continue;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"[AppFocusService] Cannot validate path for {app.AppName}: {ex.Message}");
+                                continue;
+                            }
+                        }
+
+                        _registeredApps.Add(app);
                     }
                 }
-                // Không ghi đè trạng thái trong file cấu hình ở đây; tôn trọng IsRegistered hiện có.
+
+                Debug.WriteLine($"[AppFocusService] Loaded {_registeredApps.Count} registered apps from settings");
             }
             catch (Exception ex)
             {
@@ -183,7 +214,6 @@ namespace GroupThree.FocusTimerApp.Services
             }
         }
 
-        // 🔧 utils
         private static string NormalizePath(string? path)
         {
             if (string.IsNullOrEmpty(path)) return string.Empty;

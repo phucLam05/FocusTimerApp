@@ -9,11 +9,7 @@ namespace GroupThree.FocusTimerApp.Services
     {
         private readonly IServiceProvider _serviceProvider;
 
-        // === THAY ĐỔI 1: Chuyển thành STATIC ===
-        // Biến này sẽ được CHIA SẺ bởi TẤT CẢ các thể hiện của OverlayService.
-        // Điều này giải quyết lỗi "nhiều overlay" nếu service của bạn
-        // không được đăng ký dưới dạng Singleton (mà đang bị tạo mới).
-        private static OverlayWindow? _overlay;
+        private static OverlayWindow? _overlay;
 
         public OverlayService(IServiceProvider serviceProvider)
         {
@@ -34,10 +30,6 @@ namespace GroupThree.FocusTimerApp.Services
 
                 _overlay = win; // Gán cho biến static
 
-                // === THAY ĐỔI 2: Thêm sự kiện Closed ===
-                // Rất quan trọng: Nếu cửa sổ overlay TỰ ĐÓNG (ví dụ có nút X),
-                // chúng ta phải set _overlay về null,
-                // nếu không nó sẽ không bao giờ được tạo lại.
                 _overlay.Closed += (sender, e) => _overlay = null;
 
                 _overlay.Owner = System.Windows.Application.Current?.MainWindow;

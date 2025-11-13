@@ -19,6 +19,7 @@ namespace GroupThree.FocusTimerApp.Views
         public WindowService? WindowService { get; }
         private readonly IOverlayService? _overlayService;
         private MainViewModel? _viewModel;
+        private bool _isRealClosing = false;
 
         public MainWindow()
         {
@@ -48,22 +49,33 @@ namespace GroupThree.FocusTimerApp.Views
             this.StateChanged += MainWindow_StateChanged;
         }
 
-        //===== LOGIC MỚI CHO YÊU CẦU CỦA BẠN =====
         private void MainWindow_StateChanged(object? sender, EventArgs e)
         {
             if (this.WindowState == WindowState.Minimized)
             {
-                // 1. Tự động MỞ overlay khi minimize (ví dụ: nhấn icon taskbar)
-                _overlayService?.ShowOverlay();
+                // Check RunInBackground setting
+                var cfg = SettingsService?.LoadSettings();
+                bool runInBackground = cfg?.General?.RunInBackground ?? true;
+
+                if (runInBackground)
+                {
+                    // RunInBackground = true: Hide from taskbar and show overlay
+                    this.Hide();
+                    this.ShowInTaskbar = false;
+                    _overlayService?.ShowOverlay();
+                }
+                else
+                {
+                    // RunInBackground = false: Keep in taskbar, just show overlay
+                    _overlayService?.ShowOverlay();
+                }
             }
             else if (this.WindowState == WindowState.Normal)
             {
-                // 2. Tự động TẮT overlay khi khôi phục từ taskbar
+                // Tự động TẮT overlay khi khôi phục từ taskbar
                 _overlayService?.HideOverlay();
             }
         }
-        //===== KẾT THÚC LOGIC MỚI =====
-
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             if (_viewModel != null)
@@ -95,7 +107,6 @@ namespace GroupThree.FocusTimerApp.Views
                 progress = 1 - progress;
             }
 
-            // ... (phần còn lại của logic UpdateProgressRing không đổi) ...
             double angle = progress * 360;
             if (angle < 1 && progress > 0)
             {
@@ -120,24 +131,55 @@ namespace GroupThree.FocusTimerApp.Views
 
         private void MainWindow_Closing(object? sender, CancelEventArgs e)
         {
-            // ... (logic xác nhận đóng không đổi) ...
-            var dialog = new ConfirmDialog("Confirm Exit", "Do you want to exit the application?")
+            // Load RunInBackground setting
+            var cfg = SettingsService?.LoadSettings();
+            bool runInBackground = cfg?.General?.RunInBackground ?? true;
+
+            if (_isRealClosing)
             {
-                Owner = this,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-            dialog.ShowDialog();
-            if (dialog.Result)
-            {
-                e.Cancel = false;
+                // Real exit: cleanup and allow close
                 if (_viewModel != null)
                 {
                     _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
                 }
+                e.Cancel = false;
+                return;
+            }
+
+            if (runInBackground)
+            {
+                // RunInBackground = true: Just hide window, don't show confirm, don't really exit
+                e.Cancel = true;
+                this.Hide();
+                this.ShowInTaskbar = false;
+                _overlayService?.ShowOverlay();
             }
             else
             {
-                e.Cancel = true;
+                // RunInBackground = false: Show confirm dialog and really exit if confirmed
+                var dialog = new ConfirmDialog("Confirm Exit", "Do you want to exit the application?")
+                {
+                    Owner = this,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                };
+                dialog.ShowDialog();
+
+                if (dialog.Result)
+                {
+                    // User confirmed exit: really close the app
+                    _isRealClosing = true;
+                    if (_viewModel != null)
+                    {
+                        _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+                    }
+                    e.Cancel = false;
+                    System.Windows.Application.Current.Shutdown();
+                }
+                else
+                {
+                    // User cancelled: don't close
+                    e.Cancel = true;
+                }
             }
         }
 
@@ -152,13 +194,24 @@ namespace GroupThree.FocusTimerApp.Views
         // Nút Minimize (ẩn xuống khay hệ thống)
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
-            this.Hide();
-            this.ShowInTaskbar = false;
+            // Check RunInBackground setting
+            var cfg = SettingsService?.LoadSettings();
+            bool runInBackground = cfg?.General?.RunInBackground ?? true;
 
-            // ===== LOGIC MỚI CHO YÊU CẦU CỦA BẠN =====
-            // 3. Tự động MỞ overlay khi ẩn xuống khay
-            _overlayService?.ShowOverlay();
-            // ===== KẾT THÚC LOGIC MỚI =====
+            if (runInBackground)
+            {
+                // RunInBackground = true: Hide from taskbar completely
+                this.Hide();
+                this.ShowInTaskbar = false;
+                _overlayService?.ShowOverlay();
+            }
+            else
+            {
+                // RunInBackground = false: Just minimize to taskbar
+                this.WindowState = WindowState.Minimized;
+                // ShowInTaskbar remains true
+                _overlayService?.ShowOverlay();
+            }
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -166,7 +219,6 @@ namespace GroupThree.FocusTimerApp.Views
             Close();
         }
 
-        // ... (Các hàm xử lý Sidebar không đổi) ...
         private void SidebarToggle_Checked(object sender, RoutedEventArgs e)
         {
             var storyboard = (Storyboard)FindResource("ShowSidebarAnimation");
@@ -187,6 +239,13 @@ namespace GroupThree.FocusTimerApp.Views
         private void SidebarOverlay_Click(object sender, MouseButtonEventArgs e)
         {
             SidebarToggle.IsChecked = false;
+        }
+
+        // Public method to force close without confirmation
+        public void ForceClose()
+        {
+            _isRealClosing = true;
+            Close();
         }
     }
 }

@@ -2,11 +2,7 @@
 using GroupThree.FocusTimerApp.ViewModels;
 using GroupThree.FocusTimerApp.Views;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Globalization;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Forms; // NotifyIcon
 
 namespace GroupThree.FocusTimerApp
 {
@@ -31,6 +27,9 @@ namespace GroupThree.FocusTimerApp
             var startupService = _serviceProvider!.GetRequiredService<StartupService>();
             var themeService = _serviceProvider!.GetRequiredService<ThemeService>();
             var cfg = settingsService.LoadSettings();
+
+            // Initialize NotificationService with SettingsService
+            NotificationService.Initialize(settingsService);
 
             // Initialize theme BEFORE showing windows
             themeService.Initialize();

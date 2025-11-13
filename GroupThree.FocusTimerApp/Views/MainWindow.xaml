@@ -423,19 +423,20 @@ FontWeight="Bold"
        </Border>
 
           <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-            <!-- Start Button (visible when NOT running) -->
-      <Button Content="Start" Width="78" Height="38" Command="{Binding StartCommand}"
+            <!-- Start Button (visible when NOT started yet - centered alone) -->
+      <Button Content="Start" Width="100" Height="40" Command="{Binding StartCommand}"
             Style="{StaticResource PrimaryButton}"
-    Visibility="{Binding IsRunning, Converter={StaticResource InverseBoolToVis}}" Margin="3" />
+    Visibility="{Binding CanPauseResume, Converter={StaticResource InverseBoolToVis}}" />
 
-      <!-- Pause Button (visible when running) -->
-     <Button Content="Pause" Width="78" Height="38" Command="{Binding PauseCommand}"
+      <!-- Pause/Resume Button (visible when started) -->
+     <Button Content="{Binding PauseButtonText}" Width="90" Height="40" Command="{Binding PauseCommand}"
   Style="{StaticResource ModernButton}"
-   Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}" Margin="3" />
+   Visibility="{Binding CanPauseResume, Converter={StaticResource BoolToVis}}" Margin="0,0,8,0" />
 
-        <!-- Reset Button (always visible) -->
-        <Button Content="Reset" Width="78" Height="38" Command="{Binding StopCommand}"
-        Style="{StaticResource ModernButton}" Margin="3" />
+        <!-- Stop Button (visible only when started) -->
+        <Button Content="Stop" Width="90" Height="40" Command="{Binding StopCommand}"
+        Style="{StaticResource ModernButton}" 
+        Visibility="{Binding CanPauseResume, Converter={StaticResource BoolToVis}}" />
 </StackPanel>
        </Grid>
 
