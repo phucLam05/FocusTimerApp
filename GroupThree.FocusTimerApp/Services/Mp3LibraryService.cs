@@ -1,12 +1,8 @@
+using System.IO;
+using GroupThree.FocusTimerApp.Models;
+
 namespace GroupThree.FocusTimerApp.Services
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using TagLib;
-    using GroupThree.FocusTimerApp.Models;
-
     public interface IMp3LibraryService
     {
         IEnumerable<Mp3Track> LoadFromFolder(string folderPath);

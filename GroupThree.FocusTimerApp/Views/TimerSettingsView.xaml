@@ -2,15 +2,15 @@
 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
    xmlns:converters="clr-namespace:GroupThree.FocusTimerApp.Converters">
-    
+
     <UserControl.Resources>
-    <converters:IntToStringConverter x:Key="IntToStringConverter"/>
+        <converters:IntToStringConverter x:Key="IntToStringConverter"/>
     </UserControl.Resources>
-    
+
     <StackPanel>
-  
-     <!-- Header -->
-<TextBlock Text="Timer Settings" 
+
+        <!-- Header -->
+        <TextBlock Text="Timer Settings" 
      FontSize="20" 
     FontWeight="Bold"
       Foreground="{DynamicResource TextPrimaryBrush}"
@@ -24,30 +24,30 @@ CornerRadius="16"
    Padding="18"
 Margin="0,0,0,12"
 ClipToBounds="True">
-      <StackPanel>
-   <TextBlock Text="Pomodoro Timer" 
+            <StackPanel>
+                <TextBlock Text="Pomodoro Timer" 
        FontSize="15" 
       FontWeight="SemiBold"
   Foreground="{DynamicResource TextPrimaryBrush}"
       Margin="0,0,0,12" />
 
-   <!-- Work Duration & Short Break Row -->
-     <Grid Margin="0,0,0,10">
-      <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="*" />
-   <ColumnDefinition Width="10" />
-        <ColumnDefinition Width="*" />
-   </Grid.ColumnDefinitions>
-     
-  <!-- Work Duration -->
-       <StackPanel Grid.Column="0">
-       <TextBlock Text="Work Duration" 
+                <!-- Work Duration & Short Break Row -->
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Work Duration -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Work Duration" 
     FontSize="12"
 FontWeight="Medium"
        Foreground="{DynamicResource TextPrimaryBrush}"
   Margin="0,0,0,4" />
-        <StackPanel Orientation="Horizontal">
-   <TextBox x:Name="WorkDurationTextBox"
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox x:Name="WorkDurationTextBox"
   Text="{Binding WorkDuration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource IntToStringConverter}}" 
  PreviewTextInput="NumericTextBox_PreviewTextInput"
    Width="80"
@@ -61,30 +61,30 @@ Foreground="{DynamicResource TextPrimaryBrush}"
          BorderBrush="{DynamicResource PrimaryButtonBrush}"
      BorderThickness="2"
            Padding="8">
-<TextBox.Resources>
-            <Style TargetType="Border">
-     <Setter Property="CornerRadius" Value="10"/>
-       </Style>
-      </TextBox.Resources>
-     </TextBox>
-       <TextBlock Text="min" 
+                                <TextBox.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="10"/>
+                                    </Style>
+                                </TextBox.Resources>
+                            </TextBox>
+                            <TextBlock Text="min" 
        Margin="8,0,0,0"
       VerticalAlignment="Center"
      FontSize="13"
  FontWeight="SemiBold"
     Foreground="{DynamicResource TextSecondaryBrush}" />
-      </StackPanel>
-     </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
 
-        <!-- Short Break -->
-       <StackPanel Grid.Column="2">
-     <TextBlock Text="Short Break" 
+                    <!-- Short Break -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Short Break" 
  FontSize="12"
       FontWeight="Medium"
   Foreground="{DynamicResource TextPrimaryBrush}"
         Margin="0,0,0,4" />
-<StackPanel Orientation="Horizontal">
-<TextBox x:Name="ShortBreakTextBox"
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox x:Name="ShortBreakTextBox"
           Text="{Binding ShortBreak, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource IntToStringConverter}}" 
     PreviewTextInput="NumericTextBox_PreviewTextInput"
       Width="80"
@@ -98,39 +98,39 @@ Foreground="{DynamicResource TextPrimaryBrush}"
     BorderBrush="{DynamicResource PrimaryButtonBrush}"
     BorderThickness="2"
       Padding="8">
-        <TextBox.Resources>
-         <Style TargetType="Border">
-       <Setter Property="CornerRadius" Value="10"/>
-   </Style>
-      </TextBox.Resources>
-        </TextBox>
-       <TextBlock Text="min" 
+                                <TextBox.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="10"/>
+                                    </Style>
+                                </TextBox.Resources>
+                            </TextBox>
+                            <TextBlock Text="min" 
       Margin="8,0,0,0"
    VerticalAlignment="Center"
               FontSize="13"
      FontWeight="SemiBold"
     Foreground="{DynamicResource TextSecondaryBrush}" />
-     </StackPanel>
- </StackPanel>
-    </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
 
-        <!-- Long Break & Interval Row -->
-    <Grid>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="*" />
-      <ColumnDefinition Width="10" />
-     <ColumnDefinition Width="*" />
-     </Grid.ColumnDefinitions>
-       
-      <!-- Long Break -->
-       <StackPanel Grid.Column="0">
-         <TextBlock Text="Long Break" 
+                <!-- Long Break & Interval Row -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Long Break -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Long Break" 
        FontSize="12"
       FontWeight="Medium"
 Foreground="{DynamicResource TextPrimaryBrush}"
         Margin="0,0,0,4" />
-     <StackPanel Orientation="Horizontal">
-       <TextBox x:Name="LongBreakTextBox"
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox x:Name="LongBreakTextBox"
   Text="{Binding LongBreak, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource IntToStringConverter}}" 
            PreviewTextInput="NumericTextBox_PreviewTextInput"
       Width="80"
@@ -144,30 +144,30 @@ Foreground="{DynamicResource TextPrimaryBrush}"
   BorderBrush="{DynamicResource PrimaryButtonBrush}"
  BorderThickness="2"
   Padding="8">
-     <TextBox.Resources>
-     <Style TargetType="Border">
-      <Setter Property="CornerRadius" Value="10"/>
-      </Style>
-     </TextBox.Resources>
-        </TextBox>
-   <TextBlock Text="min" 
+                                <TextBox.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="10"/>
+                                    </Style>
+                                </TextBox.Resources>
+                            </TextBox>
+                            <TextBlock Text="min" 
      Margin="8,0,0,0"
 VerticalAlignment="Center"
    FontSize="13"
        FontWeight="SemiBold"
      Foreground="{DynamicResource TextSecondaryBrush}" />
-         </StackPanel>
-         </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
 
-    <!-- Long Break Interval -->
-       <StackPanel Grid.Column="2">
-   <TextBlock Text="Long Break Every" 
+                    <!-- Long Break Interval -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Long Break Every" 
        FontSize="12"
     FontWeight="Medium"
        Foreground="{DynamicResource TextPrimaryBrush}"
          Margin="0,0,0,4" />
-        <StackPanel Orientation="Horizontal">
- <TextBox x:Name="LongBreakEveryTextBox"
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox x:Name="LongBreakEveryTextBox"
   Text="{Binding LongBreakEvery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource IntToStringConverter}}" 
  PreviewTextInput="NumericTextBox_PreviewTextInput"
    Width="80"
@@ -181,25 +181,25 @@ Background="{DynamicResource ProgressBackgroundBrush}"
       BorderBrush="{DynamicResource PrimaryButtonBrush}"
    BorderThickness="2"
         Padding="8">
- <TextBox.Resources>
-     <Style TargetType="Border">
-  <Setter Property="CornerRadius" Value="10"/>
-       </Style>
-     </TextBox.Resources>
-   </TextBox>
-         <TextBlock Text="cycles" 
+                                <TextBox.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="10"/>
+                                    </Style>
+                                </TextBox.Resources>
+                            </TextBox>
+                            <TextBlock Text="cycles" 
      Margin="8,0,0,0"
        VerticalAlignment="Center"
        FontSize="13"
    FontWeight="SemiBold"
    Foreground="{DynamicResource TextSecondaryBrush}" />
-           </StackPanel>
-    </StackPanel>
-         </Grid>
-</StackPanel>
-     </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
 
-      <!-- Tracking Settings Card -->
+        <!-- Tracking Settings Card -->
         <Border Background="{DynamicResource CardBackgroundBrush}"
      BorderBrush="{DynamicResource BorderBrush}"
       BorderThickness="1"
@@ -207,25 +207,25 @@ Background="{DynamicResource ProgressBackgroundBrush}"
   Padding="18"
      Margin="0,0,0,15"
 ClipToBounds="True">
- <Grid>
-     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="*" />
-         <ColumnDefinition Width="Auto" />
-</Grid.ColumnDefinitions>
-      
-   <StackPanel Grid.Column="0">
-         <TextBlock Text="Tracking Timer" 
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Tracking Timer" 
     FontSize="15" 
        FontWeight="SemiBold"
   Foreground="{DynamicResource TextPrimaryBrush}"
          Margin="0,0,0,4" />
-       <TextBlock Text="How often to ask what you're working on" 
+                    <TextBlock Text="How often to ask what you're working on" 
        FontSize="11"
   Foreground="{DynamicResource TextSecondaryBrush}" />
-      </StackPanel>
-        
-      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-      <TextBox x:Name="TrackingIntervalTextBox"
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBox x:Name="TrackingIntervalTextBox"
      Text="{Binding TrackingInterval, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource IntToStringConverter}}" 
       PreviewTextInput="NumericTextBox_PreviewTextInput"
    Width="80"
@@ -239,36 +239,36 @@ ClipToBounds="True">
  BorderBrush="{DynamicResource PrimaryButtonBrush}"
   BorderThickness="2"
       Padding="8">
-  <TextBox.Resources>
-     <Style TargetType="Border">
-      <Setter Property="CornerRadius" Value="10"/>
-         </Style>
-        </TextBox.Resources>
-     </TextBox>
-    <TextBlock Text="min" 
+                        <TextBox.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="10"/>
+                            </Style>
+                        </TextBox.Resources>
+                    </TextBox>
+                    <TextBlock Text="min" 
     Margin="8,0,0,0"
     VerticalAlignment="Center"
        FontSize="13"
   FontWeight="SemiBold"
       Foreground="{DynamicResource TextSecondaryBrush}" />
-        </StackPanel>
-  </Grid>
-  </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
 
-      <!-- Action Buttons -->
-<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-   <Button Content="Reset Defaults" 
+        <!-- Action Buttons -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Reset Defaults" 
        Command="{Binding ResetDefaultsCommand}" 
        Style="{StaticResource ModernButton}"
      Width="130"
  Height="38"
     Margin="0,0,8,0" />
-     
-      <Button Content="Save Changes" 
+
+            <Button Content="Save Changes" 
     Command="{Binding SaveCommand}" 
    Style="{StaticResource PrimaryButton}"
     Width="140"
   Height="38" />
-  </StackPanel>
+        </StackPanel>
     </StackPanel>
 </UserControl>

@@ -69,7 +69,7 @@ namespace GroupThree.FocusTimerApp.Services
             }
             catch
             {
-                // ignore for now
+
             }
         }
     }

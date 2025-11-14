@@ -151,15 +151,15 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public MainViewModel(ITimerService timerService, IWindowService windowService, IOverlayService overlayService, SettingsService settingsService, ThemeService themeService, IMp3LibraryService? mp3Library = null, IPlaylistStorageService? playlistStorage = null, IMediaPlaybackService? mediaPlayback = null)
         {
             _timerService = timerService ?? throw new ArgumentNullException(nameof(timerService));
-            _window_service_or_default(windowService);
+            WindowServiceOrDefault(windowService);
             _windowService = windowService ?? throw new ArgumentNullException(nameof(windowService));
-            _overlay_service_or_default(overlayService);
+            OverlayServiceOrDefault(overlayService);
             _overlay_service = overlayService ?? throw new ArgumentNullException(nameof(overlayService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             ThemeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
-            _mp3Library = mp3Library; // optional DI
-            _playlistStorage = playlistStorage; // optional DI
-            _mediaPlayback = mediaPlayback; // optional DI
+            _mp3Library = mp3Library;
+            _playlistStorage = playlistStorage;
+            _mediaPlayback = mediaPlayback;
 
             // setup tray icon for notifications with custom icon
             _notifyIcon = new System.Windows.Forms.NotifyIcon()
@@ -172,7 +172,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
             // Subscribe to settings changes to update tray icon visibility
             _settingsService.SettingsChanged += OnSettingsChanged;
-            
+
             // Set initial tray icon visibility based on current settings
             UpdateTrayIconVisibility();
 
@@ -278,7 +278,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 _notifyIcon.Dispose();
             }
             catch { }
-            
+
             try
             {
                 // Use ForceClose if MainWindow supports it
@@ -295,7 +295,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
                     System.Windows.Application.Current?.Shutdown();
                 }
             }
-            catch 
+            catch
             {
                 System.Windows.Application.Current?.Shutdown();
             }
@@ -406,7 +406,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         {
             if (string.Equals(action, "ToggleOverlay", StringComparison.OrdinalIgnoreCase))
             {
-                _overlay_service_toggle();
+                OverlayServiceToggle();
                 return;
             }
 
@@ -429,15 +429,15 @@ namespace GroupThree.FocusTimerApp.ViewModels
             }
         }
 
-        private void _overlay_service_toggle() => _overlay_service.ToggleOverlay();
+        private void OverlayServiceToggle() => _overlay_service.ToggleOverlay();
 
-        private void _window_service_or_default(IWindowService windowService)
+        private void WindowServiceOrDefault(IWindowService windowService)
         {
             // helper to avoid analyzers complaining; no-op
             _ = windowService;
         }
 
-        private void _overlay_service_or_default(IOverlayService overlayService)
+        private void OverlayServiceOrDefault(IOverlayService overlayService)
         {
             // helper to avoid analyzers complaining; no-op
             _ = overlayService;
@@ -491,7 +491,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
                     {
                         foreach (var t in _mp3Library.LoadFromFolder(music))
                             Tracks.Add(t);
-                      }
+                    }
                 }
                 catch { }
             }
@@ -573,7 +573,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
         private void OnPlaybackEnded(object? sender, EventArgs e)
         {
-            // Update UI when playback ends
             IsPlaying = false;
             (StopPlaybackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
             (PlaySelectedTrackCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();

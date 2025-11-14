@@ -9,16 +9,16 @@ namespace GroupThree.FocusTimerApp.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-  if (value == null)
-       return Visibility.Collapsed;
+            if (value == null)
+                return Visibility.Collapsed;
 
-  if (value is string str)
-         return string.IsNullOrWhiteSpace(str) ? Visibility.Collapsed : Visibility.Visible;
+            if (value is string str)
+                return string.IsNullOrWhiteSpace(str) ? Visibility.Collapsed : Visibility.Visible;
 
-      return Visibility.Visible;
+            return Visibility.Visible;
         }
 
-  public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }

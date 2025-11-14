@@ -58,7 +58,7 @@ namespace GroupThree.FocusTimerApp.Helper
         }
 
         /// <summary>
-        /// Chuyển ngược lại từ Key + modifier thành chuỗi "Ctrl+Alt+S".
+        /// Chuyển ngược lại từ Key + modifier thành chuỗi
         /// </summary>
         public static string ToString(uint modifier, Key key)
         {

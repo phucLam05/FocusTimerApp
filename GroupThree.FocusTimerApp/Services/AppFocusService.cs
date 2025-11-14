@@ -59,12 +59,13 @@ namespace GroupThree.FocusTimerApp.Services
                         if (!System.IO.File.Exists(app.ExecutablePath))
                         {
                             Debug.WriteLine($"[AppFocusService] Warning: Executable not found: {app.ExecutablePath}");
-                            // Still add it, user might have the file later
+                            return;
                         }
                     }
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"[AppFocusService] Cannot validate path: {ex.Message}");
+                        return;
                     }
                 }
 

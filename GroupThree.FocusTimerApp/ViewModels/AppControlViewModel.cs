@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows.Input;
-using Microsoft.Win32;
 using GroupThree.FocusTimerApp.Models;
 using GroupThree.FocusTimerApp.Services;
 using GroupThree.FocusTimerApp.Commands;
-using System.Threading.Tasks;
 
 namespace GroupThree.FocusTimerApp.ViewModels
 {

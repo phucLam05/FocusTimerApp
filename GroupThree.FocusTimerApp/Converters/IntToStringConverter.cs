@@ -8,20 +8,20 @@ namespace GroupThree.FocusTimerApp.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-        if (value is int intValue)
+            if (value is int intValue)
             {
-              return intValue.ToString();
-    }
-         return "0";
+                return intValue.ToString();
+            }
+            return "0";
         }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
- {
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
             if (value is string stringValue && int.TryParse(stringValue, out int result))
             {
-             return result;
+                return result;
             }
-       return 0;
+            return 0;
         }
     }
 }

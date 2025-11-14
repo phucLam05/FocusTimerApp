@@ -21,7 +21,7 @@ namespace GroupThree.FocusTimerApp.Helpers
             try
             {
                 Process p = Process.GetProcessById((int)pid);
-                return p.ProcessName; // ví dụ "chrome", "WINWORD", ...
+                return p.ProcessName;
             }
             catch
             {

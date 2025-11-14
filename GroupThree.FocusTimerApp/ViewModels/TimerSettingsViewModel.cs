@@ -14,7 +14,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         private int _shortBreak = 10;
         private int _longBreak = 30;
         private int _longBreakEvery = 4;
-        private int _trackingInterval = 15; // minutes
+        private int _trackingInterval = 15;
 
         public int WorkDuration { get => _workDuration; set => SetProperty(ref _workDuration, value); }
         public int ShortBreak { get => _shortBreak; set => SetProperty(ref _shortBreak, value); }
@@ -27,8 +27,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
         public TimerSettingsViewModel(Services.SettingsService settingsService)
         {
-            _settings_service_or_default(settingsService);
-
             _settingsService = settingsService;
             var cfg = _settingsService.LoadSettings();
             WorkDuration = cfg.TimerSettings.WorkDuration;
@@ -60,7 +58,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
             cfg.TimerSettings.TrackingInterval = TrackingInterval;
             _settingsService.SaveSettings(cfg);
 
-            // Show success dialog
             ShowSuccessDialog("Settings Saved", "Timer settings have been saved successfully!");
         }
 
@@ -75,12 +72,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 dialog.ShowDialog();
             }
             catch { }
-        }
-
-        private void _settings_service_or_default(Services.SettingsService settingsService)
-        {
-            // helper to avoid analyzers complaining; no-op
-            _ = settingsService;
         }
     }
 }

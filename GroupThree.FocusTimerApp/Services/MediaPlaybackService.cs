@@ -19,7 +19,7 @@ namespace GroupThree.FocusTimerApp.Services
         private bool _isPlaying;
         public bool IsPlaying => _isPlaying;
         public string? CurrentFile { get; private set; }
-        
+
         public event EventHandler? PlaybackEnded;
 
         public void Play(string filePath)
