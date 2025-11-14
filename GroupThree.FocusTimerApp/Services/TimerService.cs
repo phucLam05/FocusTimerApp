@@ -83,7 +83,7 @@ namespace GroupThree.FocusTimerApp.Services
                 if (remaining <= TimeSpan.Zero)
                 {
                     // break ended -> resume work
-                    Finished?.Invoke(this, EventArgs.Empty); // <-- FIX: Invoke event
+                    Finished?.Invoke(this, EventArgs.Empty);
                     ResumeWorkAfterBreak();
                     return;
                 }
@@ -103,7 +103,7 @@ namespace GroupThree.FocusTimerApp.Services
                     if (remaining <= TimeSpan.Zero)
                     {
                         // Work session finished -> start break (short or long)
-                        Finished?.Invoke(this, EventArgs.Empty); // <-- FIX: Invoke event
+                        Finished?.Invoke(this, EventArgs.Empty);
                         StartNextBreakAfterWork();
                         return;
                     }

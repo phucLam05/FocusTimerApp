@@ -12,7 +12,6 @@ namespace GroupThree.FocusTimerApp.Commands
             _canExecute = canExecute;
         }
 
-        // FIX: Added '?' to EventHandler to match ICommand interface
         public event EventHandler? CanExecuteChanged
         {
             add { CommandManager.RequerySuggested += value; }

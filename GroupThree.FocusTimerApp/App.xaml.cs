@@ -56,7 +56,7 @@ namespace GroupThree.FocusTimerApp
                 // Ensure services are created
                 _ = _serviceProvider!.GetRequiredService<AppFocusService>();
                 _ = _serviceProvider!.GetRequiredService<TimerService>();
-                _ = _serviceProvider!.GetRequiredService<FocusZoneCoordinator>(); // subscribe once via DI
+                _ = _serviceProvider!.GetRequiredService<FocusZoneCoordinator>();
             }
             catch (Exception ex)
             {
@@ -160,7 +160,7 @@ namespace GroupThree.FocusTimerApp
                     timer.WorkDuration = TimeSpan.FromMinutes(Math.Max(0, t.WorkDuration));
                     timer.ShortBreak = TimeSpan.FromMinutes(Math.Max(0, t.BreakDuration));
                     timer.LongBreak = TimeSpan.FromMinutes(Math.Max(0, t.LongBreakDuration));
-                    timer.ShortBreakAfter = TimeSpan.FromMinutes(Math.Max(0, t.WorkDuration)); // not used directly in new flow
+                    timer.ShortBreakAfter = TimeSpan.FromMinutes(Math.Max(0, t.WorkDuration));
                     timer.LongBreakAfterShortBreakCount = Math.Max(1, t.LongBreakEvery);
                     timer.ReminderInterval = TimeSpan.FromMinutes(Math.Max(0, t.TrackingInterval));
                 }

@@ -3,24 +3,24 @@
      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
           xmlns:conv="clr-namespace:GroupThree.FocusTimerApp.Converters">
     <UserControl.Resources>
-    <conv:BooleanToStatusConverter x:Key="BooleanToStatusConverter" />
+        <conv:BooleanToStatusConverter x:Key="BooleanToStatusConverter" />
         <Style x:Key="HotkeyTextBoxStyle" TargetType="TextBox">
- <Setter Property="Tag" Value="" />
-    <EventSetter Event="GotFocus" Handler="HotkeyTextBox_GotFocus" />
-     <EventSetter Event="LostFocus" Handler="HotkeyTextBox_LostFocus" />
-        <EventSetter Event="PreviewKeyDown" Handler="HotkeyTextBox_PreviewKeyDown" />
-   </Style>
+            <Setter Property="Tag" Value="" />
+            <EventSetter Event="GotFocus" Handler="HotkeyTextBox_GotFocus" />
+            <EventSetter Event="LostFocus" Handler="HotkeyTextBox_LostFocus" />
+            <EventSetter Event="PreviewKeyDown" Handler="HotkeyTextBox_PreviewKeyDown" />
+        </Style>
     </UserControl.Resources>
 
     <StackPanel>
-  <!-- Header -->
+        <!-- Header -->
         <TextBlock Text="Hotkey Settings" 
  FontSize="20" 
       FontWeight="Bold"
                 Foreground="{DynamicResource TextPrimaryBrush}"
       Margin="0,0,0,15" />
 
-      <!-- Info Card -->
+        <!-- Info Card -->
         <Border Background="{DynamicResource CardBackgroundBrush}"
             BorderBrush="{DynamicResource PrimaryButtonBrush}"
   BorderThickness="1"
@@ -28,41 +28,41 @@
               Padding="15"
  Margin="0,0,0,15"
 ClipToBounds="True">
-   <StackPanel Orientation="Horizontal">
-        <Path Data="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"
+            <StackPanel Orientation="Horizontal">
+                <Path Data="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"
    Fill="{DynamicResource PrimaryButtonBrush}"
  Width="16" Height="16"
      Stretch="Uniform"
           Margin="0,0,10,0"
          VerticalAlignment="Center" />
-      <TextBlock Text="Click on a hotkey field and press your desired key combination"
+                <TextBlock Text="Click on a hotkey field and press your desired key combination"
      FontSize="12"
         Foreground="{DynamicResource TextSecondaryBrush}"
         TextWrapping="Wrap"
          VerticalAlignment="Center" />
-         </StackPanel>
+            </StackPanel>
         </Border>
 
-   <!-- Hotkeys List -->
-     <Border Background="{DynamicResource CardBackgroundBrush}"
+        <!-- Hotkeys List -->
+        <Border Background="{DynamicResource CardBackgroundBrush}"
    BorderBrush="{DynamicResource BorderBrush}"
      BorderThickness="1"
          CornerRadius="16"
    Padding="18"
       Margin="0,0,0,15"
 ClipToBounds="True">
-  <ItemsControl ItemsSource="{Binding Hotkeys}">
+            <ItemsControl ItemsSource="{Binding Hotkeys}">
                 <ItemsControl.ItemTemplate>
-              <DataTemplate>
-         <Grid Margin="0,0,0,15">
-      <Grid.ColumnDefinitions>
-       <ColumnDefinition Width="Auto" />
-             <ColumnDefinition Width="*" />
-    <ColumnDefinition Width="180" />
-       </Grid.ColumnDefinitions>
+                    <DataTemplate>
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="180" />
+                            </Grid.ColumnDefinitions>
 
-         <!-- Keyboard Icon -->
-  <Path Grid.Column="0"
+                            <!-- Keyboard Icon -->
+                            <Path Grid.Column="0"
       Data="M19,10H17V8H19M19,13H17V11H19M16,10H14V8H16M16,13H14V11H16M16,17H8V15H16M7,10H5V8H7M7,13H5V11H7M8,11H10V13H8M8,8H10V10H8M11,11H13V13H11M11,8H13V10H11M20,5H4C2.89,5 2,5.89 2,7V17A2,2 0 0,0 4,19H20A2,2 0 0,0 22,17V7C22,5.89 21.1,5 20,5Z"
          Fill="{DynamicResource PrimaryButtonBrush}"
               Width="18" Height="18"
@@ -70,20 +70,20 @@ ClipToBounds="True">
          Margin="0,0,12,0"
                  VerticalAlignment="Center" />
 
-<!-- Action Name -->
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-            <TextBlock Text="{Binding ActionName}" 
+                            <!-- Action Name -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding ActionName}" 
        FontSize="13"
       FontWeight="SemiBold"
     Foreground="{DynamicResource TextPrimaryBrush}"
           Margin="0,0,0,2" />
-   <TextBlock Text="{Binding IsRegistered, Converter={StaticResource BooleanToStatusConverter}}"
+                                <TextBlock Text="{Binding IsRegistered, Converter={StaticResource BooleanToStatusConverter}}"
       FontSize="11"
        Foreground="{DynamicResource TextSecondaryBrush}" />
-    </StackPanel>
+                            </StackPanel>
 
-    <!-- Hotkey TextBox -->
-      <TextBox Grid.Column="2"
+                            <!-- Hotkey TextBox -->
+                            <TextBox Grid.Column="2"
        Style="{StaticResource HotkeyTextBoxStyle}"
             Text="{Binding HotkeyString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
       Height="36"
@@ -96,21 +96,21 @@ TextAlignment="Center"
        BorderBrush="{DynamicResource PrimaryButtonBrush}"
   BorderThickness="2"
    Padding="8">
-           <TextBox.Resources>
-  <Style TargetType="Border">
-    <Setter Property="CornerRadius" Value="10"/>
-  </Style>
-    </TextBox.Resources>
-   </TextBox>
-             </Grid>
-    </DataTemplate>
-      </ItemsControl.ItemTemplate>
+                                <TextBox.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="10"/>
+                                    </Style>
+                                </TextBox.Resources>
+                            </TextBox>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
             </ItemsControl>
         </Border>
 
         <!-- Action Buttons -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-   <Button Content="Reset Defaults" 
+            <Button Content="Reset Defaults" 
                Command="{Binding ResetDefaultsCommand}" 
           Style="{StaticResource ModernButton}"
      Width="130"
@@ -122,6 +122,6 @@ TextAlignment="Center"
          Style="{StaticResource PrimaryButton}"
     Width="140"
             Height="38" />
-    </StackPanel>
+        </StackPanel>
     </StackPanel>
 </UserControl>

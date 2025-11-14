@@ -1,10 +1,8 @@
 ﻿using GroupThree.FocusTimerApp.Services;
-using System;
-using System.Windows; // This using is still necessary for the Dispatcher
 
 namespace GroupThree.FocusTimerApp.ViewModels
 {
-    public class OverlayViewModel : ViewModelBase, IDisposable
+    public class OverlayViewModel : ViewModelBase
     {
         private readonly TimerService? _timerService;
 
@@ -34,7 +32,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
             // TimerService runs on a separate thread.
             // We must use the Dispatcher to update the UI (UI Thread)
 
-            // FIX: Explicitly specify System.Windows.Application to avoid ambiguity
+            // Explicitly specify System.Windows.Application to avoid ambiguity
             System.Windows.Application.Current?.Dispatcher?.InvokeAsync(() =>
             {
                 // This logic mirrors the logic from MainViewModel
@@ -49,16 +47,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
                 }
                 Progress = e.Progress;
             });
-        }
-
-        // Clean up subscription when no longer needed
-        public void Dispose()
-        {
-            if (_timerService != null)
-            {
-                _timerService.Tick -= OnTimerTick;
-            }
-            GC.SuppressFinalize(this);
         }
     }
 }

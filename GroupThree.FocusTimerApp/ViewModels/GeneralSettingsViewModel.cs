@@ -45,7 +45,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
             cfg.General.RunInBackground = RunInBackground;
             _settingsService.SaveSettings(cfg);
 
-            // Apply StartWithWindows immediately
             try
             {
                 var sp = GroupThree.FocusTimerApp.App.ServiceProvider;
@@ -54,7 +53,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
             }
             catch { }
 
-            // Show success dialog
             ShowSuccessDialog("Settings Saved", "General settings have been saved successfully!");
         }
 

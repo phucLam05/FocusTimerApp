@@ -1,7 +1,5 @@
 ﻿using GroupThree.FocusTimerApp.Commands;
-using GroupThree.FocusTimerApp.Models;
 using GroupThree.FocusTimerApp.Services;
-using GroupThree.FocusTimerApp.Views;
 using System.Windows.Input;
 
 namespace GroupThree.FocusTimerApp.ViewModels
@@ -76,7 +74,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
         private void ShowExportImport() =>
             CurrentView = new ExportImportSettingsViewModel(_settingsService, _hotkeyService);
-        
+
 
         private void ReloadHotkeys() =>
             _hotkeyService?.ReloadHotkeys();

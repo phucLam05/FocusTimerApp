@@ -29,7 +29,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
         private void Save()
         {
-            var cfg = _settings_service_or_default();
+            var cfg = SettingsServiceOrDefault();
             cfg.Notification ??= new Models.NotificationSettings();
             cfg.Notification.EnableNotifications = EnableNotifications;
             _settingsService.SaveSettings(cfg);
@@ -50,7 +50,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
             catch { }
         }
 
-        private Models.ConfigSetting _settings_service_or_default()
+        private Models.ConfigSetting SettingsServiceOrDefault()
         {
             return _settingsService.LoadSettings();
         }

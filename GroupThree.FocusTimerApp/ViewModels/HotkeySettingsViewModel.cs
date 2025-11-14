@@ -19,7 +19,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
         public ICommand ApplyCommand { get; }
         public ICommand ResetDefaultsCommand { get; }
 
-        // Standard actions we want to show and cannot remove
         private static readonly string[] StandardActions = new[] { "Start", "Pause", "Stop", "ToggleOverlay" };
 
         public HotkeySettingsViewModel(SettingsService settingsService)
@@ -41,7 +40,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
         private void LoadFromConfig()
         {
             Hotkeys.Clear();
-            var cfg = _settings_service_builder();
+            var cfg = SettingsServiceBuilder();
 
             if (cfg.Hotkeys != null && cfg.Hotkeys.Count > 0)
             {
@@ -49,7 +48,6 @@ namespace GroupThree.FocusTimerApp.ViewModels
                     Hotkeys.Add(hk);
             }
 
-            // Ensure standard action rows exist (merge defaults)
             foreach (var action in StandardActions)
             {
                 if (!Hotkeys.Any(h => string.Equals(h.ActionName, action, System.StringComparison.OrdinalIgnoreCase)))
@@ -61,14 +59,12 @@ namespace GroupThree.FocusTimerApp.ViewModels
 
         private void Apply()
         {
-            // Save into config and reload hotkeys
-            var cfg = _settings_service_builder();
+            var cfg = SettingsServiceBuilder();
             cfg.Hotkeys = Hotkeys.ToList();
             _settingsService.SaveSettings(cfg);
 
             _hotkeyService?.ReloadHotkeys();
 
-            // Show success dialog
             ShowSuccessDialog("Settings Saved", "Hotkey settings have been saved successfully!");
         }
 
@@ -76,12 +72,10 @@ namespace GroupThree.FocusTimerApp.ViewModels
         {
             _settingsService.ResetToDefault();
 
-            // reload collection from default config
             LoadFromConfig();
 
             _hotkeyService?.ReloadHotkeys();
 
-            // Show success dialog
             ShowSuccessDialog("Settings Reset", "Hotkey settings have been reset to default!");
         }
 
@@ -98,12 +92,7 @@ namespace GroupThree.FocusTimerApp.ViewModels
             catch { }
         }
 
-        private HotkeyService? _hotkey_service_builder()
-        {
-            return _hotkeyService;
-        }
-
-        private Models.ConfigSetting _settings_service_builder()
+        private Models.ConfigSetting SettingsServiceBuilder()
         {
             return _settingsService.LoadSettings();
         }

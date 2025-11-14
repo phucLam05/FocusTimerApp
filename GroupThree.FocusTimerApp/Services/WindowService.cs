@@ -21,21 +21,13 @@
                 var app = Application.Current as App;
                 HotkeyService? hotkey = app?.HotkeyServiceInstance;
 
-                var settingsService =
-                    (SettingsService?)_serviceProvider.GetService(typeof(SettingsService))
-                    ?? new SettingsService();
+                var settingsService = (SettingsService?)_serviceProvider.GetService(typeof(SettingsService)) ?? new SettingsService();
 
-                var themeService =
-                    (ThemeService?)_serviceProvider.GetService(typeof(ThemeService))
-                    ?? new ThemeService(settingsService);
+                var themeService = (ThemeService?)_serviceProvider.GetService(typeof(ThemeService)) ?? new ThemeService(settingsService);
 
-                var focusService =
-                    (AppFocusService?)_serviceProvider.GetService(typeof(AppFocusService))
-                    ?? new AppFocusService(settingsService);
+                var focusService = (AppFocusService?)_serviceProvider.GetService(typeof(AppFocusService)) ?? new AppFocusService(settingsService);
 
-                var timerService =
-                    (TimerService?)_serviceProvider.GetService(typeof(TimerService))
-                    ?? new TimerService();
+                var timerService = (TimerService?)_serviceProvider.GetService(typeof(TimerService)) ?? new TimerService();
 
                 var vm = new SettingsViewModel(settingsService, themeService, hotkey, focusService, timerService);
                 var window = new SettingsWindow

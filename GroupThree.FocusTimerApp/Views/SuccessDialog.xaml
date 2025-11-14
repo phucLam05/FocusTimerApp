@@ -10,64 +10,64 @@
         ResizeMode="NoResize"
    ShowInTaskbar="False"
    Topmost="True">
-    
+
     <!-- Outer Grid for shadow effect -->
     <Grid Margin="0,0,0,-9">
-        <!-- Content layer with proper clipping - NO SHADOW -->
-    <Border Background="{DynamicResource CardBackgroundBrush}"
+        <!-- Content layer with proper clipping -->
+        <Border Background="{DynamicResource CardBackgroundBrush}"
                 BorderBrush="#10b981"
       BorderThickness="1"
       CornerRadius="16"
     Padding="25"
         Margin="10,10,10,10"
    ClipToBounds="True">
-            
+
             <StackPanel ClipToBounds="True">
                 <!-- Icon and Title Row -->
-     <Grid Margin="0,0,0,18">
-   <Grid.ColumnDefinitions>
-   <ColumnDefinition Width="Auto" />
-   <ColumnDefinition Width="*" />
-          </Grid.ColumnDefinitions>
+                <Grid Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-  <!-- Success Icon Container -->
-        <Grid Grid.Column="0" Width="50" Height="50" Margin="0,0,15,0">
-      <!-- Green Circle -->
-      <Ellipse Fill="#10b981">
-           <Ellipse.Effect>
-     <DropShadowEffect Color="#8010b981" BlurRadius="12" ShadowDepth="0" Opacity="0.8" />
-     </Ellipse.Effect>
-     </Ellipse>
-       
-        <!-- White Checkmark -->
-        <Path Data="M9,16.17L4.83,12L3.41,13.41L9,19L21,7L19.59,5.59L9,16.17Z"
+                    <!-- Success Icon Container -->
+                    <Grid Grid.Column="0" Width="50" Height="50" Margin="0,0,15,0">
+                        <!-- Green Circle -->
+                        <Ellipse Fill="#10b981">
+                            <Ellipse.Effect>
+                                <DropShadowEffect Color="#8010b981" BlurRadius="12" ShadowDepth="0" Opacity="0.8" />
+                            </Ellipse.Effect>
+                        </Ellipse>
+
+                        <!-- White Checkmark -->
+                        <Path Data="M9,16.17L4.83,12L3.41,13.41L9,19L21,7L19.59,5.59L9,16.17Z"
            Fill="White"
    Width="26" Height="26"
           Stretch="Uniform"
          HorizontalAlignment="Center"
       VerticalAlignment="Center" />
-    </Grid>
+                    </Grid>
 
-     <!-- Title -->
-     <TextBlock x:Name="TitleText"
+                    <!-- Title -->
+                    <TextBlock x:Name="TitleText"
      Grid.Column="1"
       Text="Settings Saved"
              FontSize="20"
                    FontWeight="Bold"
       Foreground="{DynamicResource TextPrimaryBrush}"
       VerticalAlignment="Center" />
-      </Grid>
- 
-       <!-- Message -->
-       <TextBlock x:Name="MessageText"
+                </Grid>
+
+                <!-- Message -->
+                <TextBlock x:Name="MessageText"
       Text="Your settings have been saved successfully!"
           FontSize="13"
           Foreground="{DynamicResource TextSecondaryBrush}"
                   TextWrapping="Wrap"
        Margin="0,0,0,20"/>
-  
+
                 <!-- OK Button -->
-    <Button x:Name="OkButton"
+                <Button x:Name="OkButton"
              Content="OK"
  Width="100"
      Height="38"
@@ -75,7 +75,7 @@
   IsDefault="True"
  HorizontalAlignment="Right"
           Style="{StaticResource PrimaryButton}"/>
-    </StackPanel>
-     </Border>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>
